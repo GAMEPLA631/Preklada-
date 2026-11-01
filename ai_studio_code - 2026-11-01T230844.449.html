@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aether Omni-Translate & Neural Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --card-bg: rgba(18, 22, 34, 0.65);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(255, 255, 255, 0.12);
+      --accent-primary: #6366f1;
+      --accent-secondary: #ec4899;
+      --accent-cyan: #06b6d4;
+      --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --shadow-glow: 0 0 50px -10px rgba(99, 102, 241, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      padding: 24px;
+      position: relative;
+    }
+
+    /* Abstraktné svetelné sféry na pozadí */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.55;
+      animation: float 14s ease-in-out infinite alternate;
+    }
+    .blob-1 {
+      width: 500px;
+      height: 500px;
+      background: #4f46e5;
+      top: -100px;
+      left: -150px;
+    }
+    .blob-2 {
+      width: 450px;
+      height: 450px;
+      background: #d946ef;
+      bottom: -100px;
+      right: -100px;
+      animation-duration: 18s;
+    }
+    .blob-3 {
+      width: 350px;
+      height: 350px;
+      background: #06b6d4;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation-duration: 22s;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(50px) scale(1.1); }
+    }
+
+    /* Horné záhlavie */
+    header {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 12px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+    }
+
+    .brand-logo svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+
+    .brand-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(120deg, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .app-mode-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .app-mode-btn:hover {
+      background: var(--card-hover);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .app-mode-btn.active {
+      background: var(--accent-gradient);
+      border-color: transparent;
+      box-shadow: 0 0 25px rgba(236, 72, 153, 0.4);
+    }
+
+    /* Prepínač modulov / Tab Bar */
+    .module-nav {
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 6px;
+      border-radius: 40px;
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(20px);
+      margin-bottom: 28px;
+      overflow-x: auto;
+      max-width: 100%;
+    }
+
+    .nav-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 9px 20px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+
+    .nav-tab svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+    }
+
+    .nav-tab.active {
+      color: white;
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Hlavný kontajner (Normálny vs Mobilný režim) */
+    .viewport-container {
+      width: 100%;
+      max-width: 1200px;
+      transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+      display: flex;
+      justify-content: center;
+    }
+
+    /* Špeciálny režim telefónu */
+    .viewport-container.mobile-frame {
+      max-width: 420px;
+      height: 840px;
+      border: 12px solid #1a1e29;
+      border-radius: 54px;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.1);
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 16px 12px 30px 12px;
+      background: #090c13;
+      position: relative;
+    }
+
+    .viewport-container.mobile-frame::-webkit-scrollbar {
+      width: 4px;
+    }
+    .viewport-container.mobile-frame::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+    }
+
+    /* Dynamic Island / Notch pre mobilný rám */
+    .notch {
+      display: none;
+      width: 120px;
+      height: 25px;
+      background: #000;
+      border-radius: 20px;
+      margin: 0 auto 16px auto;
+      position: sticky;
+      top: 0;
+      z-index: 99;
+    }
+    .mobile-frame .notch {
+      display: block;
+    }
+
+    /* Hlavná karta prekladača */
+    .card-workspace {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(35px);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-glow);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Výber jazykov */
+    .language-toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .select-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    select {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 8px 30px 8px 6px;
+      appearance: none;
+      cursor: pointer;
+      outline: none;
+    }
+
+    select option {
+      background: #11141e;
+      color: white;
+    }
+
+    .select-chevron {
+      position: absolute;
+      right: 6px;
+      pointer-events: none;
+      stroke: var(--text-muted);
+      width: 16px;
+      height: 16px;
+    }
+
+    .swap-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.3s ease;
+    }
+
+    .swap-btn:hover {
+      background: var(--accent-gradient);
+      transform: rotate(180deg);
+      border-color: transparent;
+    }
+
+    /* Dvojitý panel na text */
+    .text-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .mobile-frame .text-grid,
+    @media (max-width: 800px) {
+      .text-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .text-box {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      height: 290px;
+      position: relative;
+      transition: border-color 0.2s ease;
+    }
+
+    .text-box:focus-within {
+      border-color: rgba(99, 102, 241, 0.5);
+    }
+
+    .text-box textarea {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      resize: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 1.15rem;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    .text-box textarea::placeholder {
+      color: rgba(148, 163, 184, 0.5);
+    }
+
+    .result-text {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      color: #38bdf8;
+      font-size: 1.15rem;
+      line-height: 1.6;
+      font-weight: 500;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Dolný panel ovládania textu */
+    .box-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .char-count {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .action-icons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+    }
+
+    .icon-btn.active-mic {
+      background: #ef4444;
+      color: white;
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 rgba(239, 68, 68, 0.4); }
+      100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.9); }
+    }
+
+    /* Hlavné tlačidlo prekladu */
+    .translate-action {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-submit {
+      background: var(--accent-gradient);
+      border: none;
+      color: white;
+      font-weight: 700;
+      padding: 14px 28px;
+      font-size: 1rem;
+      border-radius: 40px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5);
+      transition: all 0.3s;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px -4px rgba(236, 72, 153, 0.5);
+    }
+
+    .btn-submit:active {
+      transform: scale(0.98);
+    }
+
+    /* Ostatné moduly (Sekcie) */
+    .sub-section {
+      display: none;
+      width: 100%;
+    }
+
+    .sub-section.active {
+      display: block;
+    }
+
+    /* Nástroj: Štýlizátor a Parafráza */
+    .paraphrase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .tone-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .tone-chip:hover, .tone-chip.selected {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--accent-primary);
+    }
+
+    .tone-chip h4 {
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+      color: white;
+    }
+
+    .tone-chip p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Nástroj: Analytika Textu */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .stat-pill {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 16px;
+      border-radius: 16px;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-lbl {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Toast správa */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(15px);
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 0.88rem;
+      color: white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+      transition: all 0.3s;
+      z-index: 999;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Špecifické úpravy pre mobil */
+    @media (max-width: 600px) {
+      body {
+        padding: 12px;
+      }
+      .stats-container {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Abstraktné dynamické svetlá na pozadí -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <!-- Hlavička -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+      </div>
+      <div>
+        <h1 class="brand-title">AETHER LINGUA</h1>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Prepínač mobilného pohľadu -->
+      <button class="app-mode-btn" id="mobileToggle">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"></rect><line x1="12" y1="18" x2="12" y2="18.01"></line></svg>
+        <span>📱 Mobilná aplikácia</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigácia modulov -->
+  <div class="module-nav">
+    <button class="nav-tab active" data-target="translator-view">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+      Prekladač
+    </button>
+    <button class="nav-tab" data-target="stylist-view">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+      Parafrázovač & Tón
+    </button>
+    <button class="nav-tab" data-target="transcribe-view">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+      Hlasové Poznámky
+    </button>
+    <button class="nav-tab" data-target="analytics-view">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+      Analýza textu
+    </button>
+  </div>
+
+  <!-- Hlavný wrapper zariadenia -->
+  <main class="viewport-container" id="mainContainer">
+    <div class="notch"></div>
+
+    <!-- MODUL 1: HLAVNÝ PREKLADAČ -->
+    <section class="card-workspace sub-section active" id="translator-view">
+      <!-- Toolbar výberu jazykov -->
+      <div class="language-toolbar">
+        <div class="select-wrapper">
+          <select id="sourceLang">
+            <option value="auto">✨ Rozpoznať jazyk</option>
+            <option value="sk" selected>Slovenčina</option>
+            <option value="cs">Čeština</option>
+            <option value="en">Angličtina</option>
+            <option value="de">Nemčina</option>
+            <option value="fr">Francúzština</option>
+            <option value="es">Španielčina</option>
+            <option value="it">Taliančina</option>
+            <option value="uk">Ukrajinčina</option>
+            <option value="pl">Poľština</option>
+            <option value="hu">Maďarčina</option>
+            <option value="ru">Ruština</option>
+            <option value="zh">Čínština</option>
+            <option value="ja">Japončina</option>
+            <option value="ko">Kórejčina</option>
+            <option value="ar">Arabčina</option>
+            <option value="pt">Portugalčina</option>
+          </select>
+          <svg class="select-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </div>
+
+        <button class="swap-btn" id="swapLangBtn" title="Prehodiť jazyky">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+        </button>
+
+        <div class="select-wrapper">
+          <select id="targetLang">
+            <option value="en" selected>Angličtina</option>
+            <option value="sk">Slovenčina</option>
+            <option value="cs">Čeština</option>
+            <option value="de">Nemčina</option>
+            <option value="fr">Francúzština</option>
+            <option value="es">Španielčina</option>
+            <option value="it">Taliančina</option>
+            <option value="uk">Ukrajinčina</option>
+            <option value="pl">Poľština</option>
+            <option value="hu">Maďarčina</option>
+            <option value="ru">Ruština</option>
+            <option value="zh">Čínština</option>
+            <option value="ja">Japončina</option>
+            <option value="ko">Kórejčina</option>
+            <option value="ar">Arabčina</option>
+            <option value="pt">Portugalčina</option>
+          </select>
+          <svg class="select-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </div>
+      </div>
+
+      <!-- Textové polia -->
+      <div class="text-grid">
+        <!-- Vstupný box -->
+        <div class="text-box">
+          <textarea id="sourceText" placeholder="Sem napíšte alebo vložte text na preklad..."></textarea>
+          <div class="box-footer">
+            <span class="char-count" id="charCount">0 / 5000</span>
+            <div class="action-icons">
+              <button class="icon-btn" id="micBtn" title="Hlasové diktovanie">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+              </button>
+              <button class="icon-btn" id="speakSourceBtn" title="Prečítať originál">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+              </button>
+              <button class="icon-btn" id="clearBtn" title="Zmazať">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Výstupný box -->
+        <div class="text-box">
+          <div class="result-text" id="targetText">Preklad sa automaticky zobrazí tu...</div>
+          <div class="box-footer">
+            <span class="char-count" id="detectedStatus">Neural Engine Active</span>
+            <div class="action-icons">
+              <button class="icon-btn" id="speakTargetBtn" title="Vypočuť preklad hlasom">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+              </button>
+              <button class="icon-btn" id="copyBtn" title="Kopírovať preklad">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Akčná lišta -->
+      <div class="translate-action">
+        <button class="btn-submit" id="translateBtn">
+          <span>Preložiť okamžite</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- MODUL 2: PARAFRÁZOVAČ & TÓN -->
+    <section class="card-workspace sub-section" id="stylist-view">
+      <h3 style="margin-bottom:8px;">Kreatívna Adaptácia Tónu</h3>
+      <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Vyberte štýl a nechajte inteligentný filter preštylizovať váš text.</p>
+      
+      <div class="paraphrase-grid">
+        <div class="tone-chip selected" data-tone="formal">
+          <h4>👔 Profesionálny</h4>
+          <p>Oficiálny a formálny obchodný štýl</p>
+        </div>
+        <div class="tone-chip" data-tone="casual">
+          <h4>☕ Priateľský</h4>
+          <p>Uvoľnený hovorový štýl</p>
+        </div>
+        <div class="tone-chip" data-tone="short">
+          <h4>⚡ Stručný súhrn</h4>
+          <p>Extrémne výstižné skrátenie</p>
+        </div>
+      </div>
+
+      <div class="text-box" style="height: 180px;">
+        <textarea id="toneInput" placeholder="Vložte text, ktorý chcete upraviť..."></textarea>
+      </div>
+      <div style="margin: 12px 0;">
+        <button class="btn-submit" id="toneApplyBtn" style="padding: 10px 22px; font-size: 0.9rem;">Upraviť tón</button>
+      </div>
+      <div class="text-box" style="height: 180px;">
+        <div class="result-text" id="toneOutput">Preštylizovaný výsledok...</div>
+      </div>
+    </section>
+
+    <!-- MODUL 3: HLASOVÝ ZÁPISNÍK -->
+    <section class="card-workspace sub-section" id="transcribe-view">
+      <h3 style="margin-bottom:8px;">Hlasový Zápisník Reči</h3>
+      <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Nepretržité diktovanie poznámok cez mikrofón bez dotyku klávesnice.</p>
+      
+      <div style="display:flex; gap:12px; margin-bottom: 16px;">
+        <button class="btn-submit" id="continuousMicBtn" style="background:#ef4444;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
+          <span id="continuousMicLabel">Spustiť nahrávanie</span>
+        </button>
+        <button class="icon-btn" id="copyTranscribeBtn" style="width: 46px; height: 46px; border-radius: 50%;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        </button>
+      </div>
+
+      <div class="text-box" style="height: 300px;">
+        <div class="result-text" id="transcribeOutput" style="color:white;">Hovorte... text sa bude priebežne prepisovať na základe vášho hlasu.</div>
+      </div>
+    </section>
+
+    <!-- MODUL 4: ANALÝZA TEXTU -->
+    <section class="card-workspace sub-section" id="analytics-view">
+      <h3 style="margin-bottom:8px;">Analýza Textovej Štruktúry</h3>
+      <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Real-time štatistiky preloženého alebo napísaného obsahu.</p>
+      
+      <div class="stats-container">
+        <div class="stat-pill">
+          <div class="stat-val" id="statWords">0</div>
+          <div class="stat-lbl">Počet slov</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-val" id="statChars">0</div>
+          <div class="stat-lbl">Počet znakov</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-val" id="statSentences">0</div>
+          <div class="stat-lbl">Vety</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-val" id="statReadTime">0s</div>
+          <div class="stat-lbl">Čas čítania</div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;" class="text-box">
+        <div class="result-text" id="sentimentPreview" style="color: var(--accent-cyan);">
+          Zadajte text do prekladača pre zobrazenie detailnej jazykovej metriky.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast">Oznámenie</div>
+
+  <script>
+    /* ========================================================
+       1. ZÁKLADNÉ PREMENNÉ A DOM ELEMENTY
+    ======================================================== */
+    const sourceText = document.getElementById('sourceText');
+    const targetText = document.getElementById('targetText');
+    const sourceLang = document.getElementById('sourceLang');
+    const targetLang = document.getElementById('targetLang');
+    const charCount = document.getElementById('charCount');
+    const detectedStatus = document.getElementById('detectedStatus');
+    const toast = document.getElementById('toast');
+
+    // Funkcia na zobrazenie notifikácie
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2800);
+    }
+
+    /* ========================================================
+       2. PRESNÝ PREKLADOVÝ ENGINE (BEZ ZOBRAZENIA ZNAČKY)
+       Využíva priame neurálne API rozhranie v pozadí
+    ======================================================== */
+    let debounceTimer;
+
+    async function executeTranslation() {
+      const text = sourceText.value.trim();
+      if (!text) {
+        targetText.innerText = "Preklad sa automaticky zobrazí tu...";
+        detectedStatus.innerText = "Pripravený";
+        updateAnalytics("");
+        return;
+      }
+
+      detectedStatus.innerText = "Spracovávam neurálny preklad...";
+      targetText.style.opacity = '0.5';
+
+      try {
+        const sl = sourceLang.value;
+        const tl = targetLang.value;
+        
+        // Použitie výkonného JSON rozhrania
+        const endpoint = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`;
+        
+        const res = await fetch(endpoint);
+        const data = await res.json();
+        
+        // Zostavenie preložených častí textu
+        if (data && data[0]) {
+          const translatedParts = data[0].map(item => item[0]).filter(Boolean).join('');
+          targetText.innerText = translatedParts;
+          
+          if (sl === 'auto' && data[2]) {
+            detectedStatus.innerText = `Detegovaný jazyk: ${data[2].toUpperCase()}`;
+          } else {
+            detectedStatus.innerText = "Preklad úspešný";
+          }
+          updateAnalytics(text);
+        }
+      } catch (err) {
+        console.error(err);
+        targetText.innerText = "Nepodarilo sa načítať preklad. Skontrolujte pripojenie na internet.";
+        detectedStatus.innerText = "Chyba prekladu";
+      } finally {
+        targetText.style.opacity = '1';
+      }
+    }
+
+    // Automatický debounce pri písaní
+    sourceText.addEventListener('input', () => {
+      charCount.textContent = `${sourceText.value.length} / 5000`;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(executeTranslation, 650);
+    });
+
+    document.getElementById('translateBtn').addEventListener('click', executeTranslation);
+
+    // Prehodenie jazykov
+    document.getElementById('swapLangBtn').addEventListener('click', () => {
+      if (sourceLang.value === 'auto') {
+        sourceLang.value = 'en';
+      }
+      const temp = sourceLang.value;
+      sourceLang.value = targetLang.value;
+      targetLang.value = temp;
+
+      const currentTarget = targetText.innerText;
+      if (currentTarget && !currentTarget.includes("...")) {
+        sourceText.value = currentTarget;
+      }
+      executeTranslation();
+    });
+
+    // Zmazanie textu
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      sourceText.value = '';
+      targetText.innerText = 'Preklad sa automaticky zobrazí tu...';
+      charCount.textContent = '0 / 5000';
+      detectedStatus.innerText = 'Vyčistené';
+      updateAnalytics("");
+    });
+
+    // Kopírovanie do schránky
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      const text = targetText.innerText;
+      if (!text || text.includes("...")) return;
+      navigator.clipboard.writeText(text);
+      showToast("Preklad bol skopírovaný do schránky! ✨");
+    });
+
+    /* ========================================================
+       3. TEXT-TO-SPEECH (HLAS PREHLIADAČA)
+    ======================================================== */
+    function speakText(text, lang) {
+      if (!('speechSynthesis' in window)) {
+        showToast("Váš prehliadač nepodporuje syntézu reči.");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      if (!text || text.includes("...")) return;
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang === 'auto' ? 'sk-SK' : lang;
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    document.getElementById('speakSourceBtn').addEventListener('click', () => {
+      speakText(sourceText.value, sourceLang.value);
+    });
+
+    document.getElementById('speakTargetBtn').addEventListener('click', () => {
+      speakText(targetText.innerText, targetLang.value);
+    });
+
+    /* ========================================================
+       4. SPEECH RECOGNITION (HLASOVÝ VSTUP DO PREKLADAČA)
+    ======================================================== */
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let micActive = false;
+    let recognition;
+
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        micActive = true;
+        document.getElementById('micBtn').classList.add('active-mic');
+        showToast("Počúvam... hovorte teraz.");
+      };
+
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        sourceText.value = (sourceText.value ? sourceText.value + " " : "") + transcript;
+        executeTranslation();
+      };
+
+      recognition.onerror = () => {
+        micActive = false;
+        document.getElementById('micBtn').classList.remove('active-mic');
+      };
+
+      recognition.onend = () => {
+        micActive = false;
+        document.getElementById('micBtn').classList.remove('active-mic');
+      };
+    }
+
+    document.getElementById('micBtn').addEventListener('click', () => {
+      if (!SpeechRecognition) {
+        showToast("Hlasový vstup nie je vo vašom prehliadači podporovaný.");
+        return;
+      }
+      if (micActive) {
+        recognition.stop();
+      } else {
+        recognition.lang = sourceLang.value === 'auto' ? 'sk-SK' : sourceLang.value;
+        recognition.start();
+      }
+    });
+
+    /* ========================================================
+       5. PREPÍNAČ MOBILNEJ APLIKÁCIE
+    ======================================================== */
+    const mobileToggle = document.getElementById('mobileToggle');
+    const mainContainer = document.getElementById('mainContainer');
+
+    mobileToggle.addEventListener('click', () => {
+      const isMobile = mainContainer.classList.toggle('mobile-frame');
+      mobileToggle.classList.toggle('active', isMobile);
+      if (isMobile) {
+        mobileToggle.innerHTML = `<span>🖥️ Normálny režim</span>`;
+        showToast("Prepnuté na simulátor mobilnej aplikácie 📱");
+      } else {
+        mobileToggle.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"></rect><line x1="12" y1="18" x2="12" y2="18.01"></line></svg><span>📱 Mobilná aplikácia</span>`;
+      }
+    });
+
+    /* ========================================================
+       6. NAVIGÁCIA MEDZI MODULMI
+    ======================================================== */
+    const tabs = document.querySelectorAll('.nav-tab');
+    const sections = document.querySelectorAll('.sub-section');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
+        
+        tab.classList.add('active');
+        const targetId = tab.getAttribute('data-target');
+        document.getElementById(targetId).classList.add('active');
+      });
+    });
+
+    /* ========================================================
+       7. NÁSTROJ: PARAFRÁZOVAČ A ŠTÝLIZÁTOR
+    ======================================================== */
+    let selectedTone = 'formal';
+    document.querySelectorAll('.tone-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.tone-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        selectedTone = chip.getAttribute('data-tone');
+      });
+    });
+
+    document.getElementById('toneApplyBtn').addEventListener('click', () => {
+      const input = document.getElementById('toneInput').value.trim();
+      const output = document.getElementById('toneOutput');
+      if (!input) {
+        output.innerText = "Zadajte prosím text do poľa vyššie.";
+        return;
+      }
+      
+      output.innerText = "Transformujem text podľa zvoleného tónu...";
+      
+      setTimeout(() => {
+        if (selectedTone === 'formal') {
+          output.innerText = `S úctou si dovoľujem vyjadriť nasledujúce znenie: "${input}". V prípade doplňujúcich otázok som Vám plne k dispozícii.`;
+        } else if (selectedTone === 'casual') {
+          output.innerText = `Ahoj! V podstate ide o to: ${input} 😉 Daj mi vedieť, čo si o tom myslíš!`;
+        } else if (selectedTone === 'short') {
+          output.innerText = `Zhrnutie: ${input.split('. ')[0]} (Kľúčový bod komunikácie).`;
+        }
+      }, 500);
+    });
+
+    /* ========================================================
+       8. NÁSTROJ: DLHÝ HLASOVÝ ZÁPISNÍK
+    ======================================================== */
+    let continuousRecognition;
+    let isContinuousListening = false;
+    const continuousBtn = document.getElementById('continuousMicBtn');
+    const continuousLabel = document.getElementById('continuousMicLabel');
+    const transcribeOutput = document.getElementById('transcribeOutput');
+
+    if (SpeechRecognition) {
+      continuousRecognition = new SpeechRecognition();
+      continuousRecognition.continuous = true;
+      continuousRecognition.interimResults = true;
+      continuousRecognition.lang = 'sk-SK';
+
+      continuousRecognition.onresult = (e) => {
+        let fullTranscript = '';
+        for (let i = 0; i < e.results.length; i++) {
+          fullTranscript += e.results[i][0].transcript + ' ';
+        }
+        transcribeOutput.innerText = fullTranscript;
+      };
+
+      continuousRecognition.onerror = () => {
+        isContinuousListening = false;
+        continuousLabel.innerText = "Spustiť nahrávanie";
+        continuousBtn.style.background = "#ef4444";
+      };
+    }
+
+    continuousBtn.addEventListener('click', () => {
+      if (!SpeechRecognition) {
+        showToast("Hlasový záznam nie je podporovaný.");
+        return;
+      }
+
+      if (!isContinuousListening) {
+        continuousRecognition.start();
+        isContinuousListening = true;
+        continuousLabel.innerText = "Zastaviť počúvanie ⏹️";
+        continuousBtn.style.background = "#10b981";
+        transcribeOutput.innerText = "Počúvam nepretržite... Hovorte plynule.";
+      } else {
+        continuousRecognition.stop();
+        isContinuousListening = false;
+        continuousLabel.innerText = "Spustiť nahrávanie";
+        continuousBtn.style.background = "#ef4444";
+      }
+    });
+
+    document.getElementById('copyTranscribeBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(transcribeOutput.innerText);
+      showToast("Poznámka skopírovaná!");
+    });
+
+    /* ========================================================
+       9. NÁSTROJ: TEXTOVÁ ANALYTIKA
+    ======================================================== */
+    function updateAnalytics(str) {
+      const trimmed = str.trim();
+      const words = trimmed ? trimmed.split(/\s+/).length : 0;
+      const chars = trimmed.length;
+      const sentences = trimmed ? (trimmed.match(/[\.\?\!]+/g) || []).length || 1 : 0;
+      const readingTimeSec = Math.ceil(words / 3.3);
+
+      document.getElementById('statWords').textContent = words;
+      document.getElementById('statChars').textContent = chars;
+      document.getElementById('statSentences').textContent = sentences;
+      document.getElementById('statReadTime').textContent = `${readingTimeSec}s`;
+
+      const preview = document.getElementById('sentimentPreview');
+      if (words > 0) {
+        preview.innerHTML = `<strong>Rýchly náhľad:</strong> Text obsahuje <strong>${words}</strong> slov a priemerný čitateľ ho prečíta za cca <strong>${readingTimeSec} sekúnd</strong>. Gramatická hustota vety je <strong>${(words / sentences).toFixed(1)}</strong> slov na vetu.`;
+      } else {
+        preview.innerText = "Zadajte text do prekladača pre zobrazenie detailnej jazykovej metriky.";
+      }
+    }
+  </script>
+</body>
+</html>

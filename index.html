@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aether Omni-Suite & Gemini 3.8 TTS Studio</title>
+  <title>Aether Omni-Suite & QR Cloud Auth</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Bezplatná P2P/Cloud knižnica pre WebRTC QR autentifikáciu medzi PC a mobilom -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
   <style>
     :root {
       --bg-dark: #07090e;
@@ -25,13 +28,7 @@
       --shadow-glow: 0 0 50px -10px rgba(99, 102, 241, 0.25);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
     body {
       background-color: var(--bg-dark);
@@ -64,7 +61,7 @@
       100% { transform: translateY(50px) scale(1.1); }
     }
 
-    /* Horná navigácia a profil */
+    /* Hlavička */
     header {
       width: 100%;
       max-width: 1200px;
@@ -77,41 +74,21 @@
       gap: 16px;
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
+    .brand { display: flex; align-items: center; gap: 12px; }
     .brand-logo {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      background: var(--accent-gradient);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+      width: 44px; height: 44px; border-radius: 14px; background: var(--accent-gradient);
+      display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
     }
     .brand-logo svg { width: 24px; height: 24px; fill: white; }
 
     .brand-title {
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
+      font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;
       background: linear-gradient(120deg, #ffffff, #94a3b8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
-    .header-actions {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+    .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
-    /* Anonymný účet badge */
     .user-pill {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--card-border);
@@ -124,13 +101,7 @@
       font-family: 'Space Grotesk', monospace;
     }
 
-    .tier-badge {
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 0.7rem;
-      font-weight: 800;
-      text-transform: uppercase;
-    }
+    .tier-badge { padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
     .tier-free { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
     .tier-pro { background: rgba(6, 182, 212, 0.2); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.4); }
     .tier-ultra { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5); }
@@ -154,448 +125,172 @@
     .app-mode-btn.active { background: var(--accent-gradient); border-color: transparent; }
 
     .btn-upgrade {
-      background: var(--gold-gradient);
-      color: #000;
-      font-weight: 800;
-      border: none;
-      padding: 9px 16px;
-      border-radius: 30px;
-      font-size: 0.84rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+      background: var(--gold-gradient); color: #000; font-weight: 800; border: none;
+      padding: 9px 16px; border-radius: 30px; font-size: 0.84rem; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
       transition: all 0.2s;
     }
     .btn-upgrade:hover { transform: scale(1.04); }
 
-    /* Moduly / Tab Bar */
-    .module-nav {
-      display: flex;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.04);
-      padding: 6px;
-      border-radius: 40px;
-      border: 1px solid var(--card-border);
-      backdrop-filter: blur(20px);
-      margin-bottom: 24px;
-      overflow-x: auto;
-      max-width: 100%;
+    .btn-auth-header {
+      background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white; font-weight: 700; padding: 8px 18px; border-radius: 30px;
+      cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
     }
+    .btn-auth-header:hover { background: rgba(255, 255, 255, 0.18); }
 
+    /* Moduly */
+    .module-nav {
+      display: flex; gap: 8px; background: rgba(255, 255, 255, 0.04); padding: 6px;
+      border-radius: 40px; border: 1px solid var(--card-border); backdrop-filter: blur(20px);
+      margin-bottom: 24px; overflow-x: auto; max-width: 100%;
+    }
     .nav-tab {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      padding: 8px 18px;
-      border-radius: 30px;
-      font-weight: 600;
-      font-size: 0.88rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.25s ease;
-      white-space: nowrap;
+      background: transparent; border: none; color: var(--text-muted); padding: 8px 18px;
+      border-radius: 30px; font-weight: 600; font-size: 0.88rem; cursor: pointer;
+      display: flex; align-items: center; gap: 8px; transition: all 0.25s ease; white-space: nowrap;
     }
     .nav-tab svg { width: 16px; height: 16px; stroke: currentColor; }
     .nav-tab.active { color: white; background: rgba(255, 255, 255, 0.12); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
 
-    /* Rám kontajneru */
+    /* Rám a zámok pre neprihlásených */
     .viewport-container {
-      width: 100%;
-      max-width: 1200px;
-      transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-      display: flex;
-      justify-content: center;
+      width: 100%; max-width: 1200px; transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+      display: flex; justify-content: center; position: relative;
     }
-
     .viewport-container.mobile-frame {
-      max-width: 420px;
-      height: 840px;
-      border: 12px solid #1a1e29;
-      border-radius: 54px;
+      max-width: 420px; height: 840px; border: 12px solid #1a1e29; border-radius: 54px;
       box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.1);
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 16px 12px 30px 12px;
-      background: #090c13;
-      position: relative;
+      overflow-y: auto; overflow-x: hidden; padding: 16px 12px 30px 12px; background: #090c13;
     }
-    .viewport-container.mobile-frame::-webkit-scrollbar { width: 4px; }
-    .viewport-container.mobile-frame::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
 
-    .notch {
-      display: none;
-      width: 120px;
-      height: 25px;
-      background: #000;
-      border-radius: 20px;
-      margin: 0 auto 16px auto;
-      position: sticky;
-      top: 0;
-      z-index: 99;
+    /* ZÁMOK CELÉHO SYSTÉMU PRE NEPRIHLÁSENÝCH */
+    .auth-lock-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(7, 9, 14, 0.82); backdrop-filter: blur(20px);
+      z-index: 50; border-radius: var(--radius-lg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 30px; text-align: center;
     }
+    .auth-lock-overlay.hidden { display: none; }
+    .lock-icon-box {
+      width: 68px; height: 68px; border-radius: 50%; background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4); display: flex; align-items: center;
+      justify-content: center; margin-bottom: 16px;
+    }
+
+    .notch { display: none; width: 120px; height: 25px; background: #000; border-radius: 20px; margin: 0 auto 16px auto; position: sticky; top: 0; z-index: 99; }
     .mobile-frame .notch { display: block; }
 
     .card-workspace {
-      width: 100%;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      backdrop-filter: blur(35px);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-glow);
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
+      width: 100%; background: var(--card-bg); border: 1px solid var(--card-border);
+      backdrop-filter: blur(35px); border-radius: var(--radius-lg); box-shadow: var(--shadow-glow);
+      padding: 24px; display: flex; flex-direction: column; gap: 18px;
     }
-
     .sub-section { display: none; width: 100%; }
     .sub-section.active { display: block; }
 
-    /* Prekladač Toolbar */
+    /* Prekladač & Nástroje */
     .language-toolbar {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 12px;
-      background: rgba(0, 0, 0, 0.25);
-      padding: 10px 16px;
-      border-radius: var(--radius-md);
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
+      background: rgba(0, 0, 0, 0.25); padding: 10px 16px; border-radius: var(--radius-md);
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
-
     .select-wrapper { position: relative; display: flex; align-items: center; }
     select {
-      width: 100%;
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-size: 0.95rem;
-      font-weight: 600;
-      padding: 8px 30px 8px 6px;
-      appearance: none;
-      cursor: pointer;
-      outline: none;
+      width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 0.95rem;
+      font-weight: 600; padding: 8px 30px 8px 6px; appearance: none; cursor: pointer; outline: none;
     }
     select option { background: #11141e; color: white; }
     .select-chevron { position: absolute; right: 6px; pointer-events: none; stroke: var(--text-muted); width: 16px; height: 16px; }
 
     .swap-btn {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--card-border);
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: var(--text-main);
-      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.06); border: 1px solid var(--card-border); width: 40px; height: 40px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;
+      color: var(--text-main); transition: all 0.3s ease;
     }
     .swap-btn:hover { background: var(--accent-gradient); transform: rotate(180deg); border-color: transparent; }
 
-    .text-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
+    .text-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .mobile-frame .text-grid, @media (max-width: 800px) { .text-grid { grid-template-columns: 1fr; } }
 
     .text-box {
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: var(--radius-md);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      height: 290px;
-      position: relative;
-      transition: border-color 0.2s ease;
+      background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column;
+      height: 290px; position: relative; transition: border-color 0.2s ease;
     }
     .text-box:focus-within { border-color: rgba(99, 102, 241, 0.5); }
-    .text-box textarea {
-      width: 100%;
-      height: 100%;
-      background: transparent;
-      border: none;
-      resize: none;
-      outline: none;
-      color: var(--text-main);
-      font-size: 1.15rem;
-      line-height: 1.6;
-    }
+    .text-box textarea { width: 100%; height: 100%; background: transparent; border: none; resize: none; outline: none; color: var(--text-main); font-size: 1.15rem; line-height: 1.6; }
 
-    .result-text {
-      width: 100%;
-      height: 100%;
-      overflow-y: auto;
-      color: #38bdf8;
-      font-size: 1.15rem;
-      line-height: 1.6;
-      font-weight: 500;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
+    .result-text { width: 100%; height: 100%; overflow-y: auto; color: #38bdf8; font-size: 1.15rem; line-height: 1.6; font-weight: 500; white-space: pre-wrap; word-break: break-word; }
 
-    .box-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-    }
+    .box-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
     .char-count { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; }
     .action-icons { display: flex; gap: 6px; }
 
     .icon-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid transparent;
-      color: var(--text-muted);
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
+      background: rgba(255, 255, 255, 0.05); border: 1px solid transparent; color: var(--text-muted);
+      width: 36px; height: 36px; border-radius: 10px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; transition: all 0.2s;
     }
     .icon-btn:hover { background: rgba(255, 255, 255, 0.15); color: white; }
     .icon-btn.active-mic { background: #ef4444; color: white; animation: pulse 1s infinite alternate; }
 
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 rgba(239, 68, 68, 0.4); }
-      100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.9); }
-    }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 rgba(239, 68, 68, 0.4); } 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.9); } }
 
     .translate-action { display: flex; justify-content: flex-end; gap: 12px; align-items: center; }
     .btn-submit {
-      background: var(--accent-gradient);
-      border: none;
-      color: white;
-      font-weight: 700;
-      padding: 13px 26px;
-      font-size: 0.95rem;
-      border-radius: 40px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5);
+      background: var(--accent-gradient); border: none; color: white; font-weight: 700;
+      padding: 13px 26px; font-size: 0.95rem; border-radius: 40px; cursor: pointer;
+      display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5);
       transition: all 0.3s;
     }
     .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -4px rgba(236, 72, 153, 0.5); }
 
-    /* ========================================================
-       GEMINI 3.8 FLASH-LITE TTS STUDIO
-    ======================================================== */
-    .tts-header-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      background: rgba(0,0,0,0.25);
-      padding: 14px 18px;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .model-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(6, 182, 212, 0.15);
-      color: var(--accent-cyan);
-      border: 1px solid rgba(6, 182, 212, 0.3);
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-weight: 700;
-      font-size: 0.78rem;
-      font-family: 'Space Grotesk', monospace;
-    }
-
-    .api-key-box {
-      display: flex;
-      gap: 8px;
-      width: 100%;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 8px 12px;
-      align-items: center;
-    }
-    .api-key-box input {
-      width: 100%;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #38bdf8;
-      font-family: 'Space Grotesk', monospace;
-      font-size: 0.88rem;
-    }
-
-    .tts-controls-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-    }
+    /* TTS & Štýly sekcií */
+    .tts-header-info { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: rgba(0,0,0,0.25); padding: 14px 18px; border-radius: var(--radius-md); border: 1px solid rgba(255, 255, 255, 0.06); }
+    .model-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.3); padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.78rem; font-family: 'Space Grotesk', monospace; }
+    .api-key-box { display: flex; gap: 8px; width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--card-border); border-radius: 12px; padding: 8px 12px; align-items: center; }
+    .api-key-box input { width: 100%; background: transparent; border: none; outline: none; color: #38bdf8; font-family: 'Space Grotesk', monospace; font-size: 0.88rem; }
+    .tts-controls-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
     @media (max-width: 768px) { .tts-controls-row { grid-template-columns: 1fr; } }
-
-    .tts-player-card {
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: var(--radius-md);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .download-formats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
+    .tts-player-card { background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-md); padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .download-formats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     @media (max-width: 600px) { .download-formats-grid { grid-template-columns: 1fr 1fr; } }
-
-    .btn-download-format {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--card-border);
-      padding: 10px 8px;
-      border-radius: 12px;
-      color: var(--text-main);
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      transition: all 0.2s;
-    }
-    .btn-download-format:hover { background: rgba(255, 255, 255, 0.12); }
+    .btn-download-format { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); padding: 10px 8px; border-radius: 12px; color: var(--text-main); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.82rem; font-weight: 700; transition: all 0.2s; }
     .btn-download-format.locked { opacity: 0.45; }
     .btn-download-format.locked span.lock-label { font-size: 0.65rem; color: #f59e0b; }
-
-    /* Limit cooldown banner */
-    .limit-banner {
-      display: none;
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      padding: 12px 18px;
-      border-radius: var(--radius-md);
-      color: #fca5a5;
-      font-size: 0.88rem;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
+    .limit-banner { display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px 18px; border-radius: var(--radius-md); color: #fca5a5; font-size: 0.88rem; align-items: center; justify-content: space-between; gap: 12px; }
     .limit-banner.show { display: flex; }
 
-    /* Modál Platobnej Brány */
-    .modal-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(12px);
-      z-index: 9999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
+    /* Modály */
+    .modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(14px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px; }
     .modal-backdrop.open { display: flex; }
+    .modal-card { width: 100%; max-width: 580px; background: #0f131f; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 28px; padding: 28px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9); position: relative; max-height: 92vh; overflow-y: auto; }
+    .pay-input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); color: white; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; outline: none; margin-bottom: 10px; }
 
-    .modal-card {
-      width: 100%;
-      max-width: 620px;
-      background: #0f131f;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 28px;
-      padding: 28px;
-      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9);
-      position: relative;
-      max-height: 92vh;
-      overflow-y: auto;
-    }
+    /* Auth modal záložky */
+    .auth-tabs-row { display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 10px; }
+    .auth-tab-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.95rem; font-weight: 700; cursor: pointer; padding: 6px 14px; border-radius: 16px; transition: all 0.2s; }
+    .auth-tab-btn.active { color: white; background: rgba(255, 255, 255, 0.1); }
 
-    .pricing-cards-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin: 18px 0;
-    }
-    @media (max-width: 600px) { .pricing-cards-grid { grid-template-columns: 1fr; } }
+    .auth-pane { display: none; }
+    .auth-pane.active { display: block; }
 
-    .plan-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 2px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
-      padding: 16px;
-      cursor: pointer;
-      transition: all 0.25s;
-    }
-    .plan-card.selected { border-color: var(--accent-primary); background: rgba(99, 102, 241, 0.12); }
-    .plan-card h4 { font-size: 1.05rem; margin-bottom: 4px; }
-    .plan-price { font-size: 1.4rem; font-weight: 800; color: #38bdf8; margin-bottom: 8px; }
-    .plan-features { list-style: none; font-size: 0.76rem; color: var(--text-muted); line-height: 1.6; }
+    /* QR Code Display */
+    .qr-container { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 20px; background: rgba(0, 0, 0, 0.35); border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.06); text-align: center; }
+    .qr-image-frame { width: 200px; height: 200px; background: white; padding: 8px; border-radius: 14px; box-shadow: 0 0 25px rgba(99, 102, 241, 0.4); display: flex; align-items: center; justify-content: center; }
+    .qr-image-frame img { width: 100%; height: 100%; display: block; }
+    .qr-status-pill { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: rgba(6, 182, 212, 0.15); color: #38bdf8; font-weight: 600; }
 
-    .pay-input {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--card-border);
-      color: white;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      outline: none;
-      margin-bottom: 10px;
-    }
+    /* Mobilná autorizačná obrazovka */
+    .mobile-approval-screen { display: none; width: 100%; max-width: 480px; background: #0f131f; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 28px; padding: 32px; text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8); }
 
-    /* Email a ostatné sekcie */
-    .email-gen-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      background: rgba(0, 0, 0, 0.22);
-      padding: 16px;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    .email-provider-select {
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid var(--card-border);
-      color: white;
-      padding: 10px 18px;
-      border-radius: 30px;
-      outline: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-    .email-table-wrap {
-      max-height: 380px;
-      overflow-y: auto;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      background: rgba(0, 0, 0, 0.25);
-    }
-    .email-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    }
+    /* Email a štylizátor */
+    .email-gen-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: rgba(0, 0, 0, 0.22); padding: 16px; border-radius: var(--radius-md); border: 1px solid rgba(255, 255, 255, 0.05); }
+    .email-provider-select { background: rgba(255, 255, 255, 0.07); border: 1px solid var(--card-border); color: white; padding: 10px 18px; border-radius: 30px; outline: none; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
+    .email-table-wrap { max-height: 380px; overflow-y: auto; border-radius: var(--radius-md); border: 1px solid rgba(255, 255, 255, 0.06); background: rgba(0, 0, 0, 0.25); }
+    .email-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
     .email-address { font-size: 1rem; font-weight: 600; color: #38bdf8; font-family: 'Space Grotesk', monospace; }
     .provider-tag { font-size: 0.68rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; text-transform: uppercase; }
     .tag-google { background: rgba(234, 67, 53, 0.2); color: #fca5a5; border: 1px solid rgba(234, 67, 53, 0.3); }
@@ -603,14 +298,7 @@
     .tag-other { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.3); }
 
     .paraphrase-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-    .tone-chip {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+    .tone-chip { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 14px; padding: 14px; cursor: pointer; transition: all 0.2s; }
     .tone-chip.selected { background: rgba(99, 102, 241, 0.15); border-color: var(--accent-primary); }
 
     .stats-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
@@ -620,21 +308,10 @@
     .stat-lbl { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
 
     .toast {
-      position: fixed;
-      bottom: 24px;
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(15px);
-      padding: 12px 24px;
-      border-radius: 30px;
-      font-size: 0.88rem;
-      color: white;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      opacity: 0;
-      transform: translateY(20px);
-      pointer-events: none;
-      transition: all 0.3s;
-      z-index: 99999;
+      position: fixed; bottom: 24px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(15px); padding: 12px 24px; border-radius: 30px; font-size: 0.88rem; color: white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; transform: translateY(20px); pointer-events: none;
+      transition: all 0.3s; z-index: 999999;
     }
     .toast.show { opacity: 1; transform: translateY(0); }
   </style>
@@ -645,395 +322,493 @@
   <div class="blob blob-2"></div>
   <div class="blob blob-3"></div>
 
-  <!-- Hlavička -->
-  <header>
-    <div class="brand">
-      <div class="brand-logo">
-        <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
-      </div>
-      <div>
-        <h1 class="brand-title">AETHER LINGUA</h1>
-      </div>
+  <!-- MOBILNÁ SCHVAĽOVACIA OBRAZOVKA (Zobrazí sa po naskenovaní QR na telefóne) -->
+  <div class="mobile-approval-screen" id="mobileApprovalScreen">
+    <div style="width:60px; height:60px; border-radius:50%; background:rgba(99,102,241,0.2); margin:0 auto 16px auto; display:flex; align-items:center; justify-content:center;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"></rect><line x1="12" y1="18" x2="12" y2="18.01"></line></svg>
     </div>
+    <h2 style="font-size:1.4rem; margin-bottom:8px;">Overenie Prihlásenia na PC</h2>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">
+      Naskenovali ste QR kód pre prihlásenie do systému Aether Lingua. Potvrďte reláciu pre váš počítač.
+    </p>
 
-    <div class="header-actions">
-      <!-- Anonymný účet generovaný pre prehliadač -->
-      <div class="user-pill" id="userPill">
-        <span>👤 ID: <b id="userAnonId">Generujem...</b></span>
-        <span class="tier-badge tier-free" id="userTierBadge">FREE</span>
-      </div>
+    <input type="text" id="mobileConfirmName" class="pay-input" placeholder="Vaše Meno alebo Email" value="Overený Používateľ">
 
-      <!-- Tlačidlo na otvorenie platobnej brány -->
-      <button class="btn-upgrade" id="openPaymentBtn">
-        <span>💎 Tarify & Brána</span>
-      </button>
-
-      <button class="app-mode-btn" id="mobileToggle">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"></rect><line x1="12" y1="18" x2="12" y2="18.01"></line></svg>
-        <span>📱 Mobilná aplikácia</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- Navigačné záložky -->
-  <div class="module-nav">
-    <button class="nav-tab active" data-target="translator-view">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-      Prekladač
+    <button class="btn-submit" id="btnApproveOnMobile" style="width:100%; justify-content:center; margin-top:10px;">
+      <span>✅ Potvrdiť a Prihlásiť Počítač</span>
     </button>
-    <!-- NOVÝ MODUL: GEMINI TTS -->
-    <button class="nav-tab" data-target="tts-gemini-view">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-      🔊 Gemini 3.8 Flash-Lite TTS
-    </button>
-    <button class="nav-tab" data-target="email-gen-view">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-      ⚡ AI Email Generátor
-    </button>
-    <button class="nav-tab" data-target="stylist-view">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-      Parafrázovač & Tón
-    </button>
-    <button class="nav-tab" data-target="transcribe-view">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-      Hlasové Poznámky Pro
-    </button>
-    <button class="nav-tab" data-target="analytics-view">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-      Analýza textu
-    </button>
+    <div id="mobileApproveStatus" style="margin-top:14px; font-size:0.85rem; color:#38bdf8;"></div>
   </div>
 
-  <main class="viewport-container" id="mainContainer">
-    <div class="notch"></div>
-
-    <!-- MODUL 1: HLAVNÝ PREKLADAČ -->
-    <section class="card-workspace sub-section active" id="translator-view">
-      <div class="language-toolbar">
-        <div class="select-wrapper">
-          <select id="sourceLang">
-            <option value="auto">✨ Rozpoznať jazyk</option>
-            <option value="sk" selected>Slovenčina</option>
-            <option value="cs">Čeština</option>
-            <option value="en">Angličtina</option>
-            <option value="de">Nemčina</option>
-            <option value="fr">Francúzština</option>
-            <option value="es">Španielčina</option>
-            <option value="it">Taliančina</option>
-            <option value="uk">Ukrajinčina</option>
-            <option value="pl">Poľština</option>
-            <option value="hu">Maďarčina</option>
-            <option value="ru">Ruština</option>
-            <option value="zh">Čínština</option>
-            <option value="ja">Japončina</option>
-            <option value="ko">Kórejčina</option>
-            <option value="ar">Arabčina</option>
-            <option value="pt">Portugalčina</option>
-          </select>
-          <svg class="select-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+  <!-- ŠTANDARDNÉ ROZHRANIE APLIKÁCIE -->
+  <div id="mainAppWrapper" style="width:100%; display:flex; flex-direction:column; align-items:center;">
+    <header>
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
         </div>
-
-        <button class="swap-btn" id="swapLangBtn" title="Prehodiť jazyky">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
-        </button>
-
-        <div class="select-wrapper">
-          <select id="targetLang">
-            <option value="en" selected>Angličtina</option>
-            <option value="sk">Slovenčina</option>
-            <option value="cs">Čeština</option>
-            <option value="de">Nemčina</option>
-            <option value="fr">Francúzština</option>
-            <option value="es">Španielčina</option>
-            <option value="it">Taliančina</option>
-            <option value="uk">Ukrajinčina</option>
-            <option value="pl">Poľština</option>
-            <option value="hu">Maďarčina</option>
-            <option value="ru">Ruština</option>
-            <option value="zh">Čínština</option>
-            <option value="ja">Japončina</option>
-            <option value="ko">Kórejčina</option>
-            <option value="ar">Arabčina</option>
-            <option value="pt">Portugalčina</option>
-          </select>
-          <svg class="select-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-        </div>
-      </div>
-
-      <div class="text-grid">
-        <div class="text-box">
-          <textarea id="sourceText" placeholder="Sem napíšte alebo vložte text na preklad..."></textarea>
-          <div class="box-footer">
-            <span class="char-count" id="charCount">0 / 5000</span>
-            <div class="action-icons">
-              <button class="icon-btn" id="micBtn" title="Hlasové diktovanie">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-              </button>
-              <button class="icon-btn" id="speakSourceBtn" title="Prečítať originál">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-              </button>
-              <button class="icon-btn" id="clearBtn" title="Zmazať">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="text-box">
-          <div class="result-text" id="targetText">Preklad sa automaticky zobrazí tu...</div>
-          <div class="box-footer">
-            <span class="char-count" id="detectedStatus">Neural Engine Active</span>
-            <div class="action-icons">
-              <button class="icon-btn" id="speakTargetBtn" title="Vypočuť preklad hlasom">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-              </button>
-              <button class="icon-btn" id="copyBtn" title="Kopírovať preklad">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="translate-action">
-        <button class="btn-submit" id="translateBtn">
-          <span>Preložiť okamžite</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-        </button>
-      </div>
-    </section>
-
-    <!-- NOVÝ MODUL 2: GEMINI 3.8 FLASH-LITE TTS STUDIO -->
-    <section class="card-workspace sub-section" id="tts-gemini-view">
-      <div class="tts-header-info">
         <div>
-          <h3>Gemini 3.8 Flash-Lite Text-to-Speech</h3>
-          <p style="color:var(--text-muted); font-size:0.86rem; margin-top:2px;">
-            Vysoko výkonný hlasový generátor s podporou vlastného kľúča a sťahovania formátov.
+          <h1 class="brand-title">AETHER LINGUA</h1>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Stav prihlásenia a anonymné ID -->
+        <div class="user-pill" id="userPill">
+          <span>👤 <b id="userDisplayName">Hosť (Neprihlásený)</b></span>
+          <span class="tier-badge tier-free" id="userTierBadge">LOCK</span>
+        </div>
+
+        <!-- Tlačidlá Prihlásenia / Odhlásenia -->
+        <button class="btn-auth-header" id="headerAuthBtn">Prihlásiť sa</button>
+
+        <button class="btn-upgrade" id="openPaymentBtn">
+          <span>💎 Tarify & Brána</span>
+        </button>
+
+        <button class="app-mode-btn" id="mobileToggle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"></rect><line x1="12" y1="18" x2="12" y2="18.01"></line></svg>
+          <span>📱 Mobilná aplikácia</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigačné záložky -->
+    <div class="module-nav">
+      <button class="nav-tab active" data-target="translator-view">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        Prekladač
+      </button>
+      <button class="nav-tab" data-target="tts-gemini-view">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        🔊 Gemini 3.8 Flash-Lite TTS
+      </button>
+      <button class="nav-tab" data-target="email-gen-view">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+        ⚡ AI Email Generátor
+      </button>
+      <button class="nav-tab" data-target="stylist-view">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        Parafrázovač & Tón
+      </button>
+      <button class="nav-tab" data-target="transcribe-view">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+        Hlasové Poznámky Pro
+      </button>
+      <button class="nav-tab" data-target="analytics-view">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        Analýza textu
+      </button>
+    </div>
+
+    <!-- Hlavný kontajner -->
+    <main class="viewport-container" id="mainContainer">
+      <div class="notch"></div>
+
+      <!-- ZÁMOK SYSTÉMU (Zobrazí sa ak používateľ nie je prihlásený) -->
+      <div class="auth-lock-overlay" id="authGateOverlay">
+        <div class="lock-icon-box">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
+        <h2 style="font-size:1.6rem; margin-bottom:10px;">Prístup je uzamknutý</h2>
+        <p style="color:var(--text-muted); max-width:440px; margin-bottom:24px; font-size:0.92rem; line-height:1.6;">
+          Pre používanie prekladača, generovania hlasu cez Gemini TTS a AI generátora emailov sa musíte <b>prihlásiť</b> alebo si <b>založiť účet</b>.
+        </p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+          <button class="btn-submit" onclick="openAuthModal('login')">Prihlásiť sa</button>
+          <button class="app-mode-btn" onclick="openAuthModal('register')">Registrácia účtu</button>
+          <button class="app-mode-btn" onclick="openAuthModal('qr')" style="border-color:var(--accent-cyan);">📲 Prihlásiť cez QR kód</button>
+        </div>
+      </div>
+
+      <!-- MODUL 1: HLAVNÝ PREKLADAČ -->
+      <section class="card-workspace sub-section active" id="translator-view">
+        <div class="language-toolbar">
+          <div class="select-wrapper">
+            <select id="sourceLang">
+              <option value="auto">✨ Rozpoznať jazyk</option>
+              <option value="sk" selected>Slovenčina</option>
+              <option value="cs">Čeština</option>
+              <option value="en">Angličtina</option>
+              <option value="de">Nemčina</option>
+              <option value="fr">Francúzština</option>
+              <option value="es">Španielčina</option>
+              <option value="it">Taliančina</option>
+              <option value="uk">Ukrajinčina</option>
+              <option value="pl">Poľština</option>
+              <option value="hu">Maďarčina</option>
+              <option value="ru">Ruština</option>
+              <option value="zh">Čínština</option>
+              <option value="ja">Japončina</option>
+              <option value="ko">Kórejčina</option>
+              <option value="ar">Arabčina</option>
+              <option value="pt">Portugalčina</option>
+            </select>
+            <svg class="select-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          </div>
+
+          <button class="swap-btn" id="swapLangBtn" title="Prehodiť jazyky">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+          </button>
+
+          <div class="select-wrapper">
+            <select id="targetLang">
+              <option value="en" selected>Angličtina</option>
+              <option value="sk">Slovenčina</option>
+              <option value="cs">Čeština</option>
+              <option value="de">Nemčina</option>
+              <option value="fr">Francúzština</option>
+              <option value="es">Španielčina</option>
+              <option value="it">Taliančina</option>
+              <option value="uk">Ukrajinčina</option>
+              <option value="pl">Poľština</option>
+              <option value="hu">Maďarčina</option>
+              <option value="ru">Ruština</option>
+              <option value="zh">Čínština</option>
+              <option value="ja">Japončina</option>
+              <option value="ko">Kórejčina</option>
+              <option value="ar">Arabčina</option>
+              <option value="pt">Portugalčina</option>
+            </select>
+            <svg class="select-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          </div>
+        </div>
+
+        <div class="text-grid">
+          <div class="text-box">
+            <textarea id="sourceText" placeholder="Sem napíšte alebo vložte text na preklad..."></textarea>
+            <div class="box-footer">
+              <span class="char-count" id="charCount">0 / 5000</span>
+              <div class="action-icons">
+                <button class="icon-btn" id="micBtn" title="Hlasové diktovanie">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </button>
+                <button class="icon-btn" id="speakSourceBtn" title="Prečítať originál">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                </button>
+                <button class="icon-btn" id="clearBtn" title="Zmazať">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-box">
+            <div class="result-text" id="targetText">Preklad sa automaticky zobrazí tu...</div>
+            <div class="box-footer">
+              <span class="char-count" id="detectedStatus">Neural Engine Active</span>
+              <div class="action-icons">
+                <button class="icon-btn" id="speakTargetBtn" title="Vypočuť preklad hlasom">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                </button>
+                <button class="icon-btn" id="copyBtn" title="Kopírovať preklad">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="translate-action">
+          <button class="btn-submit" id="translateBtn">
+            <span>Preložiť okamžite</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- MODUL 2: GEMINI 3.8 FLASH-LITE TTS STUDIO -->
+      <section class="card-workspace sub-section" id="tts-gemini-view">
+        <div class="tts-header-info">
+          <div>
+            <h3>Gemini 3.8 Flash-Lite Text-to-Speech</h3>
+            <p style="color:var(--text-muted); font-size:0.86rem; margin-top:2px;">
+              Vysoko výkonný hlasový generátor s podporou vlastného kľúča a sťahovania formátov.
+            </p>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="model-badge">gemini-3.8-flash-lite-tts</span>
+            <span class="db-badge" id="freeLimitCounter">Limit: 3/3 zadarmo</span>
+          </div>
+        </div>
+
+        <div class="limit-banner" id="ttsLimitBanner">
+          <span>⚠️ Bezplatný limit (3 generovania) vyčerpaný. Počkajte <b id="cooldownTimer">2h 00m</b> alebo aktivujte prémium.</span>
+          <button class="btn-upgrade" onclick="openPaymentModal()" style="padding:6px 14px; font-size:0.78rem;">Odomknúť limit</button>
+        </div>
+
+        <div class="api-key-box">
+          <span style="font-size:0.8rem; font-weight:700; color:#94a3b8; white-space:nowrap;">Google API Kľúč:</span>
+          <input type="password" id="googleApiKeyInput" placeholder="Vložte sem váš Google AI Studio API kľúč (uloží sa do IndexedDB)...">
+          <button class="app-mode-btn" id="saveApiKeyBtn" style="padding: 6px 14px; font-size: 0.78rem;">Uložiť kľúč</button>
+        </div>
+
+        <div class="tts-controls-row">
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Neurálny Hlas</label>
+            <select id="ttsVoiceSelect" class="pay-input" style="margin-top:6px;">
+              <option value="Puck">Puck (Energický / Štúdiový)</option>
+              <option value="Charon">Charon (Hlboký / Rozprávač)</option>
+              <option value="Kore" selected>Kore (Prirodzený / Plynulý)</option>
+              <option value="Fenrir">Fenrir (Autoritatívny)</option>
+              <option value="Aoede">Aoede (Jemný / Melodický)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Jazyk výslovnosti</label>
+            <select id="ttsLangSelect" class="pay-input" style="margin-top:6px;">
+              <option value="sk-SK">Slovenčina (SK)</option>
+              <option value="cs-CZ">Čeština (CZ)</option>
+              <option value="en-US" selected>Angličtina (US)</option>
+              <option value="de-DE">Nemčina (DE)</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <button class="btn-submit" id="generateTtsBtn" style="width:100%; justify-content:center; padding:11px;">
+              <span>Vygenerovať Hlas (Gemini)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="text-box" style="height:170px;">
+          <textarea id="ttsTextInput" placeholder="Sem zadajte text, ktorý má model gemini-3.8-flash-lite-tts previesť na realistickú reč..."></textarea>
+        </div>
+
+        <div class="tts-player-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <h4 style="font-size:0.95rem;">Zvukový výstup</h4>
+            <span id="ttsAudioStatus" style="font-size:0.8rem; color:var(--text-muted);">Pripravený</span>
+          </div>
+
+          <audio id="audioPlayer" controls style="width:100%; border-radius:30px; outline:none;"></audio>
+
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <span style="font-size:0.8rem; font-weight:700; color:#e2e8f0;">Sťahovanie súboru (Platené formáty)</span>
+              <span style="font-size:0.74rem; color:#f59e0b;">Vyžaduje tarifný balíček</span>
+            </div>
+            <div class="download-formats-grid">
+              <button class="btn-download-format locked" id="dlWavBtn">
+                <span>🎵 WAV Audio</span>
+                <span class="lock-label">Pro / Ultra</span>
+              </button>
+              <button class="btn-download-format locked" id="dlMp3Btn">
+                <span>🎧 MP3 Audio</span>
+                <span class="lock-label">Pro / Ultra</span>
+              </button>
+              <button class="btn-download-format locked" id="dlMp4Btn">
+                <span>🎬 MP4 Video</span>
+                <span class="lock-label">Iba Ultra</span>
+              </button>
+              <button class="btn-download-format locked" id="dlMkvBtn">
+                <span>🎞️ MKV Media</span>
+                <span class="lock-label">Iba Ultra</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODUL 3: AI EMAIL GENERÁTOR -->
+      <section class="card-workspace sub-section" id="email-gen-view">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h3 style="margin-bottom:6px;">Neurálny Generátor Emailov</h3>
+            <p style="color:var(--text-muted); font-size: 0.88rem;">Generuje adresy z Google, Microsoftu a ukladá do IndexedDB.</p>
+          </div>
+          <div class="db-badge" id="indexedDbStatus">IndexedDB: Pripravená</div>
+        </div>
+
+        <div class="email-gen-controls">
+          <select class="email-provider-select" id="providerSelect">
+            <option value="all">⚡ Všetky služby (Mix)</option>
+            <option value="google" selected>🔴 Google (@gmail.com, @googlemail.com)</option>
+            <option value="microsoft">🔵 Microsoft (@outlook.com, @hotmail.com, @live.com)</option>
+            <option value="tech">🟣 Moderné & Bezpečné (@proton.me, @icloud.com, @zoho.com)</option>
+          </select>
+
+          <button class="btn-submit" id="genSingleEmailBtn" style="padding: 10px 22px; font-size: 0.9rem;">
+            <span>+ Vygenerovať 1 Email</span>
+          </button>
+
+          <button class="btn-submit" id="genBatchEmailBtn" style="padding: 10px 22px; font-size: 0.9rem; background: linear-gradient(135deg, #06b6d4, #3b82f6);">
+            <span>⚡ Dávka (+10)</span>
+          </button>
+
+          <button class="app-mode-btn" id="streamAutoBtn" style="padding: 10px 18px;">
+            <span>▶️ Nekonečné generovanie (OFF)</span>
+          </button>
+        </div>
+
+        <div class="db-header-bar" style="display:flex; justify-content:space-between; align-items:center; margin:16px 0 10px 0;">
+          <span style="font-size:0.9rem; font-weight:700;">Uložené v IndexedDB: <span id="emailDbCount" style="color:var(--accent-cyan);">0</span></span>
+          <div style="display:flex; gap:8px;">
+            <button class="icon-btn" id="exportDbBtn" title="Exportovať JSON">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
+            <button class="icon-btn" id="clearDbBtn" title="Vymazať celú databázu">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="email-table-wrap" id="emailListWrap">
+          <div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+            Zoznam je prázdny. Kliknite na generovanie.
+          </div>
+        </div>
+      </section>
+
+      <!-- MODUL 4: PARAFRÁZOVAČ & TÓN -->
+      <section class="card-workspace sub-section" id="stylist-view">
+        <h3 style="margin-bottom:8px;">Kreatívna Adaptácia Tónu</h3>
+        <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Vyberte štýl a nechajte filter preštylizovať váš text.</p>
+        
+        <div class="paraphrase-grid">
+          <div class="tone-chip selected" data-tone="formal">
+            <h4>👔 Profesionálny</h4>
+            <p>Oficiálny a formálny štýl</p>
+          </div>
+          <div class="tone-chip" data-tone="casual">
+            <h4>☕ Priateľský</h4>
+            <p>Uvoľnený hovorový štýl</p>
+          </div>
+          <div class="tone-chip" data-tone="short">
+            <h4>⚡ Stručný súhrn</h4>
+            <p>Extrémne výstižné skrátenie</p>
+          </div>
+        </div>
+
+        <div class="text-box" style="height: 180px;">
+          <textarea id="toneInput" placeholder="Vložte text, ktorý chcete upraviť..."></textarea>
+        </div>
+        <div style="margin: 12px 0;">
+          <button class="btn-submit" id="toneApplyBtn" style="padding: 10px 22px; font-size: 0.9rem;">Upraviť tón</button>
+        </div>
+        <div class="text-box" style="height: 180px;">
+          <div class="result-text" id="toneOutput">Preštylizovaný výsledok...</div>
+        </div>
+      </section>
+
+      <!-- MODUL 5: HLASOVÉ POZNÁMKY PRO -->
+      <section class="card-workspace sub-section" id="transcribe-view">
+        <h3 style="margin-bottom:8px;">Hlasový Zápisník Pro (Lepšia analýza reči)</h3>
+        <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
+          Automatická oprava gramatiky, interpunkčné príkazy (povedzte: „bodka“, „čiarka“, „otáznik“, „nový riadok“) a filtrovanie pazvukov.
+        </p>
+        
+        <div style="display:flex; gap:12px; margin-bottom: 16px;">
+          <button class="btn-submit" id="continuousMicBtn" style="background:#ef4444;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
+            <span id="continuousMicLabel">Spustiť nahrávanie</span>
+          </button>
+          <button class="icon-btn" id="copyTranscribeBtn" style="width: 46px; height: 46px; border-radius: 50%;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          </button>
+        </div>
+
+        <div class="text-box" style="height: 300px;">
+          <div class="result-text" id="transcribeOutput" style="color:white;">Hovorte... algoritmus automaticky filtruje šum a správne zaradí veľké písmená.</div>
+        </div>
+      </section>
+
+      <!-- MODUL 6: ANALÝZA TEXTU -->
+      <section class="card-workspace sub-section" id="analytics-view">
+        <h3 style="margin-bottom:8px;">Analýza Textovej Štruktúry</h3>
+        <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Metriky a čitateľnosť v reálnom čase.</p>
+        
+        <div class="stats-container">
+          <div class="stat-pill">
+            <div class="stat-val" id="statWords">0</div>
+            <div class="stat-lbl">Počet slov</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-val" id="statChars">0</div>
+            <div class="stat-lbl">Počet znakov</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-val" id="statSentences">0</div>
+            <div class="stat-lbl">Vety</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-val" id="statReadTime">0s</div>
+            <div class="stat-lbl">Čas čítania</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;" class="text-box">
+          <div class="result-text" id="sentimentPreview" style="color: var(--accent-cyan);">
+            Zadajte text do prekladača pre zobrazenie detailnej jazykovej metriky.
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODÁL PRE REGISTRÁCIU, PRIHLÁSENIE A LIVE QR KÓD -->
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 id="authModalTitle">Účet a Prístup</h3>
+        <button class="icon-btn" onclick="closeAuthModal()">✕</button>
+      </div>
+
+      <!-- Prepínače kariet -->
+      <div class="auth-tabs-row">
+        <button class="auth-tab-btn active" id="tabBtnLogin" onclick="switchAuthTab('login')">Prihlásenie</button>
+        <button class="auth-tab-btn" id="tabBtnRegister" onclick="switchAuthTab('register')">Registrácia</button>
+        <button class="auth-tab-btn" id="tabBtnQr" onclick="switchAuthTab('qr')">📲 QR Kód (Live)</button>
+      </div>
+
+      <!-- 1. PRIHLÁSENIE HESLOM -->
+      <div class="auth-pane active" id="paneLogin">
+        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Prihlasovací Email</label>
+        <input type="email" class="pay-input" id="loginEmail" placeholder="vas@email.com">
+
+        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Heslo</label>
+        <input type="password" class="pay-input" id="loginPassword" placeholder="••••••••">
+
+        <button class="btn-submit" id="submitLoginBtn" style="width:100%; justify-content:center; margin-top:12px;">
+          <span>Prihlásiť sa do systému</span>
+        </button>
+      </div>
+
+      <!-- 2. REGISTRÁCIA NOVÉHO ÚČTU -->
+      <div class="auth-pane" id="paneRegister">
+        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Vaše Meno alebo Prezývka</label>
+        <input type="text" class="pay-input" id="regName" placeholder="Meno Priezvisko">
+
+        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Registračný Email</label>
+        <input type="email" class="pay-input" id="regEmail" placeholder="novy@email.com">
+
+        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Vytvorte si Heslo</label>
+        <input type="password" class="pay-input" id="regPassword" placeholder="Minimálne 6 znakov">
+
+        <button class="btn-submit" id="submitRegisterBtn" style="width:100%; justify-content:center; margin-top:12px;">
+          <span>Zaregistrovať nový účet</span>
+        </button>
+      </div>
+
+      <!-- 3. REAL-TIME QR KÓD PRIHLÁSENIE BEŽIACE NA ZADARMO CLOUDE (PeerJS) -->
+      <div class="auth-pane" id="paneQr">
+        <div class="qr-container">
+          <div class="qr-status-pill" id="qrServerStatus">Pripájam k bezplatnému PeerJS serveru...</div>
+          
+          <div class="qr-image-frame" id="qrFrameBox">
+            <img id="qrCodeImg" src="" alt="QR Kód">
+          </div>
+
+          <p style="font-size:0.84rem; color:var(--text-muted); max-width:380px;">
+            Naskenujte tento QR kód fotoaparátom v telefóne alebo tablete. Na druhom zariadení sa otvorí schválenie a <b>tento počítač sa automaticky prihlási</b>.
           </p>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <span class="model-badge">gemini-3.8-flash-lite-tts</span>
-          <span class="db-badge" id="freeLimitCounter">Limit: 3/3 zadarmo</span>
-        </div>
-      </div>
 
-      <!-- Limit cooldown oznam -->
-      <div class="limit-banner" id="ttsLimitBanner">
-        <span>⚠️ Bezplatný limit (3 generovania) bol vyčerpaný. Počkajte <b id="cooldownTimer">2h 00m</b> alebo aktivujte prémium.</span>
-        <button class="btn-upgrade" onclick="openPaymentModal()" style="padding:6px 14px; font-size:0.78rem;">Odomknúť limit</button>
-      </div>
-
-      <!-- Google API kľúč -->
-      <div class="api-key-box">
-        <span style="font-size:0.8rem; font-weight:700; color:#94a3b8; white-space:nowrap;">Google API Kľúč:</span>
-        <input type="password" id="googleApiKeyInput" placeholder="Vložte sem váš Google AI Studio API kľúč (uloží sa do IndexedDB)...">
-        <button class="app-mode-btn" id="saveApiKeyBtn" style="padding: 6px 14px; font-size: 0.78rem;">Uložiť kľúč</button>
-      </div>
-
-      <!-- Výber hlasu a parametrov -->
-      <div class="tts-controls-row">
-        <div>
-          <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Neurálny Hlas</label>
-          <select id="ttsVoiceSelect" class="pay-input" style="margin-top:6px;">
-            <option value="Puck">Puck (Energický / Štúdiový)</option>
-            <option value="Charon">Charon (Hlboký / Rozprávač)</option>
-            <option value="Kore" selected>Kore (Prirodzený / Plynulý)</option>
-            <option value="Fenrir">Fenrir (Autoritatívny)</option>
-            <option value="Aoede">Aoede (Jemný / Melodický)</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Jazyk výslovnosti</label>
-          <select id="ttsLangSelect" class="pay-input" style="margin-top:6px;">
-            <option value="sk-SK">Slovenčina (SK)</option>
-            <option value="cs-CZ">Čeština (CZ)</option>
-            <option value="en-US" selected>Angličtina (US)</option>
-            <option value="de-DE">Nemčina (DE)</option>
-          </select>
-        </div>
-        <div style="display:flex; align-items:flex-end;">
-          <button class="btn-submit" id="generateTtsBtn" style="width:100%; justify-content:center; padding:11px;">
-            <span>Vygenerovať Hlas (Gemini)</span>
+          <button class="app-mode-btn" id="copyQrLinkBtn" style="font-size:0.78rem;">
+            🔗 Alebo skopírovať overovací link
           </button>
         </div>
       </div>
-
-      <!-- Text na prečítanie -->
-      <div class="text-box" style="height:170px;">
-        <textarea id="ttsTextInput" placeholder="Sem zadajte text, ktorý má model gemini-3.8-flash-lite-tts previesť na realistickú reč..."></textarea>
-      </div>
-
-      <!-- Prehrávač a sťahovanie audio súborov -->
-      <div class="tts-player-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <h4 style="font-size:0.95rem;">Zvukový výstup</h4>
-          <span id="ttsAudioStatus" style="font-size:0.8rem; color:var(--text-muted);">Pripravený</span>
-        </div>
-
-        <audio id="audioPlayer" controls style="width:100%; border-radius:30px; outline:none;"></audio>
-
-        <div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <span style="font-size:0.8rem; font-weight:700; color:#e2e8f0;">Sťahovanie súboru (Platené formáty)</span>
-            <span style="font-size:0.74rem; color:#f59e0b;">Vyžaduje tarifný balíček</span>
-          </div>
-          <div class="download-formats-grid">
-            <button class="btn-download-format locked" id="dlWavBtn">
-              <span>🎵 WAV Audio</span>
-              <span class="lock-label">Pro / Ultra</span>
-            </button>
-            <button class="btn-download-format locked" id="dlMp3Btn">
-              <span>🎧 MP3 Audio</span>
-              <span class="lock-label">Pro / Ultra</span>
-            </button>
-            <button class="btn-download-format locked" id="dlMp4Btn">
-              <span>🎬 MP4 Video</span>
-              <span class="lock-label">Iba Ultra</span>
-            </button>
-            <button class="btn-download-format locked" id="dlMkvBtn">
-              <span>🎞️ MKV Media</span>
-              <span class="lock-label">Iba Ultra</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- MODUL 3: AI EMAIL GENERÁTOR -->
-    <section class="card-workspace sub-section" id="email-gen-view">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
-        <div>
-          <h3 style="margin-bottom:6px;">Neurálny Generátor Emailov</h3>
-          <p style="color:var(--text-muted); font-size: 0.88rem;">Generuje adresy z Google, Microsoftu a ukladá do IndexedDB.</p>
-        </div>
-        <div class="db-badge" id="indexedDbStatus">IndexedDB: Pripravená</div>
-      </div>
-
-      <div class="email-gen-controls">
-        <select class="email-provider-select" id="providerSelect">
-          <option value="all">⚡ Všetky služby (Mix)</option>
-          <option value="google" selected>🔴 Google (@gmail.com, @googlemail.com)</option>
-          <option value="microsoft">🔵 Microsoft (@outlook.com, @hotmail.com, @live.com)</option>
-          <option value="tech">🟣 Moderné & Bezpečné (@proton.me, @icloud.com, @zoho.com)</option>
-        </select>
-
-        <button class="btn-submit" id="genSingleEmailBtn" style="padding: 10px 22px; font-size: 0.9rem;">
-          <span>+ Vygenerovať 1 Email</span>
-        </button>
-
-        <button class="btn-submit" id="genBatchEmailBtn" style="padding: 10px 22px; font-size: 0.9rem; background: linear-gradient(135deg, #06b6d4, #3b82f6);">
-          <span>⚡ Dávka (+10)</span>
-        </button>
-
-        <button class="app-mode-btn" id="streamAutoBtn" style="padding: 10px 18px;">
-          <span>▶️ Nekonečné generovanie (OFF)</span>
-        </button>
-      </div>
-
-      <div class="db-header-bar" style="display:flex; justify-content:space-between; align-items:center; margin:16px 0 10px 0;">
-        <span style="font-size:0.9rem; font-weight:700;">Uložené v IndexedDB: <span id="emailDbCount" style="color:var(--accent-cyan);">0</span></span>
-        <div style="display:flex; gap:8px;">
-          <button class="icon-btn" id="exportDbBtn" title="Exportovať JSON">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          </button>
-          <button class="icon-btn" id="clearDbBtn" title="Vymazať celú databázu">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="email-table-wrap" id="emailListWrap">
-        <div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-          Zoznam je prázdny. Kliknite na generovanie.
-        </div>
-      </div>
-    </section>
-
-    <!-- MODUL 4: PARAFRÁZOVAČ & TÓN -->
-    <section class="card-workspace sub-section" id="stylist-view">
-      <h3 style="margin-bottom:8px;">Kreatívna Adaptácia Tónu</h3>
-      <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Vyberte štýl a nechajte filter preštylizovať váš text.</p>
-      
-      <div class="paraphrase-grid">
-        <div class="tone-chip selected" data-tone="formal">
-          <h4>👔 Profesionálny</h4>
-          <p>Oficiálny a formálny štýl</p>
-        </div>
-        <div class="tone-chip" data-tone="casual">
-          <h4>☕ Priateľský</h4>
-          <p>Uvoľnený hovorový štýl</p>
-        </div>
-        <div class="tone-chip" data-tone="short">
-          <h4>⚡ Stručný súhrn</h4>
-          <p>Extrémne výstižné skrátenie</p>
-        </div>
-      </div>
-
-      <div class="text-box" style="height: 180px;">
-        <textarea id="toneInput" placeholder="Vložte text, ktorý chcete upraviť..."></textarea>
-      </div>
-      <div style="margin: 12px 0;">
-        <button class="btn-submit" id="toneApplyBtn" style="padding: 10px 22px; font-size: 0.9rem;">Upraviť tón</button>
-      </div>
-      <div class="text-box" style="height: 180px;">
-        <div class="result-text" id="toneOutput">Preštylizovaný výsledok...</div>
-      </div>
-    </section>
-
-    <!-- MODUL 5: HLASOVÉ POZNÁMKY (INTELIGENTNEJŠIE PREPISOVANIE) -->
-    <section class="card-workspace sub-section" id="transcribe-view">
-      <h3 style="margin-bottom:8px;">Hlasový Zápisník Pro (Lepšia analýza reči)</h3>
-      <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
-        Automatická oprava gramatiky, interpunkčné príkazy (povedzte: „bodka“, „čiarka“, „otáznik“, „nový riadok“) a filtrovanie pazvukov.
-      </p>
-      
-      <div style="display:flex; gap:12px; margin-bottom: 16px;">
-        <button class="btn-submit" id="continuousMicBtn" style="background:#ef4444;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
-          <span id="continuousMicLabel">Spustiť nahrávanie</span>
-        </button>
-        <button class="icon-btn" id="copyTranscribeBtn" style="width: 46px; height: 46px; border-radius: 50%;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        </button>
-      </div>
-
-      <div class="text-box" style="height: 300px;">
-        <div class="result-text" id="transcribeOutput" style="color:white;">Hovorte... algoritmus automaticky filtruje šum a správne zaradí veľké písmená.</div>
-      </div>
-    </section>
-
-    <!-- MODUL 6: ANALÝZA TEXTU -->
-    <section class="card-workspace sub-section" id="analytics-view">
-      <h3 style="margin-bottom:8px;">Analýza Textovej Štruktúry</h3>
-      <p style="color:var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Metriky a čitateľnosť v reálnom čase.</p>
-      
-      <div class="stats-container">
-        <div class="stat-pill">
-          <div class="stat-val" id="statWords">0</div>
-          <div class="stat-lbl">Počet slov</div>
-        </div>
-        <div class="stat-pill">
-          <div class="stat-val" id="statChars">0</div>
-          <div class="stat-lbl">Počet znakov</div>
-        </div>
-        <div class="stat-pill">
-          <div class="stat-val" id="statSentences">0</div>
-          <div class="stat-lbl">Vety</div>
-        </div>
-        <div class="stat-pill">
-          <div class="stat-val" id="statReadTime">0s</div>
-          <div class="stat-lbl">Čas čítania</div>
-        </div>
-      </div>
-
-      <div style="margin-top:20px;" class="text-box">
-        <div class="result-text" id="sentimentPreview" style="color: var(--accent-cyan);">
-          Zadajte text do prekladača pre zobrazenie detailnej jazykovej metriky.
-        </div>
-      </div>
-    </section>
-  </main>
+    </div>
+  </div>
 
   <!-- MODÁL PLATOBNEJ BRÁNY -->
   <div class="modal-backdrop" id="paymentModal">
@@ -1046,32 +821,20 @@
         Platba je aktivovaná na presne <b>1 mesiac (30 dní)</b> a uloží sa do IndexedDB. Po uplynutí 30 dní sa prémium automaticky zmaže.
       </p>
 
-      <!-- Výber balíčka -->
-      <div class="pricing-cards-grid">
-        <div class="plan-card" id="planCardPro" onclick="selectPlan('pro')">
+      <div class="pricing-cards-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:18px 0;">
+        <div class="tone-chip" id="planCardPro" onclick="selectPlan('pro')" style="padding:16px;">
           <h4>Audio Pro</h4>
-          <div class="plan-price">9.99 € <span style="font-size:0.8rem; color:var(--text-muted);">/ mesiac</span></div>
-          <ul class="plan-features">
-            <li>✓ 200 generovaní Gemini TTS</li>
-            <li>✓ <b>Sťahovanie WAV súborov</b></li>
-            <li>✓ <b>Sťahovanie MP3 súborov</b></li>
-            <li>✓ Žiadne 2-hodinové čakanie</li>
-          </ul>
+          <div style="font-size:1.3rem; font-weight:800; color:#38bdf8; margin:6px 0;">9.99 € <span style="font-size:0.75rem; color:var(--text-muted);">/ mes.</span></div>
+          <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.5;">200 TTS generovaní, sťahovanie WAV & MP3.</p>
         </div>
 
-        <div class="plan-card selected" id="planCardUltra" onclick="selectPlan('ultra')">
+        <div class="tone-chip selected" id="planCardUltra" onclick="selectPlan('ultra')" style="padding:16px;">
           <h4>Studio Master</h4>
-          <div class="plan-price">19.99 € <span style="font-size:0.8rem; color:var(--text-muted);">/ mesiac</span></div>
-          <ul class="plan-features">
-            <li>✓ <b>Neobmedzené</b> generovanie TTS</li>
-            <li>✓ <b>Sťahovanie WAV & MP3</b></li>
-            <li>✓ <b>Sťahovanie MP4 Video & MKV</b></li>
-            <li>✓ Najvyššia štúdiová priorita</li>
-          </ul>
+          <div style="font-size:1.3rem; font-weight:800; color:#38bdf8; margin:6px 0;">19.99 € <span style="font-size:0.75rem; color:var(--text-muted);">/ mes.</span></div>
+          <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.5;">Neobmedzené TTS, sťahovanie WAV, MP3, MP4 & MKV.</p>
         </div>
       </div>
 
-      <!-- Formulár karty -->
       <div style="background:rgba(0,0,0,0.3); padding:16px; border-radius:16px; border:1px solid rgba(255,255,255,0.06);">
         <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Číslo platobnej karty</label>
         <input type="text" class="pay-input" id="payCardNum" placeholder="4242 •••• •••• 4242" maxlength="19">
@@ -1104,16 +867,9 @@
 
   <script>
     /* ========================================================
-       1. ZÁKLADNÉ DOM A NOTIFIKÁCIE
+       1. ZÁKLADNÉ DOM ELEMENTY A NOTIFIKÁCIE
     ======================================================== */
-    const sourceText = document.getElementById('sourceText');
-    const targetText = document.getElementById('targetText');
-    const sourceLang = document.getElementById('sourceLang');
-    const targetLang = document.getElementById('targetLang');
-    const charCount = document.getElementById('charCount');
-    const detectedStatus = document.getElementById('detectedStatus');
     const toast = document.getElementById('toast');
-
     function showToast(msg) {
       toast.textContent = msg;
       toast.classList.add('show');
@@ -1121,12 +877,12 @@
     }
 
     /* ========================================================
-       2. INDEXED DB: DVE TABUĽKY (EMAILY + ANONYMNÝ ÚČET / TARIFY)
+       2. INDEXED DB (TABUĽKY: EMAILS + ACCOUNT + REGISTERED USERS)
     ======================================================== */
     const DB_NAME = 'AetherNeuralDB';
-    const DB_VERSION = 2; // Zvýšená verzia pre pridaný account_store
+    const DB_VERSION = 3; // Verzia 3 s tabuľkou registrovaných používateľov
     let dbInstance = null;
-    let currentUserAccount = null;
+    let currentUser = null; // Aktuálne prihlásený používateľ
 
     function initIndexedDB() {
       return new Promise((resolve, reject) => {
@@ -1134,288 +890,398 @@
 
         req.onupgradeneeded = (e) => {
           const db = e.target.result;
-          // Tabuľka emailov
           if (!db.objectStoreNames.contains('emails_store')) {
             const store = db.createObjectStore('emails_store', { keyPath: 'id', autoIncrement: true });
             store.createIndex('email', 'email', { unique: true });
           }
-          // Tabuľka anonymného profilu používateľa a kľúča
           if (!db.objectStoreNames.contains('account_store')) {
             db.createObjectStore('account_store', { keyPath: 'id' });
+          }
+          // Nová tabuľka registrovaných účtov
+          if (!db.objectStoreNames.contains('registered_users')) {
+            db.createObjectStore('registered_users', { keyPath: 'email' });
           }
         };
 
         req.onsuccess = async (e) => {
           dbInstance = e.target.result;
           document.getElementById('indexedDbStatus').textContent = "IndexedDB: Pripojená";
-          await loadOrCreateUserAccount();
+          await restoreLoginSession();
           loadEmailsFromDB();
           resolve(dbInstance);
         };
 
-        req.onerror = (e) => {
-          console.error("IndexedDB error:", e);
-          reject(e);
-        };
+        req.onerror = (e) => reject(e);
       });
     }
 
-    // Načítanie / vytvorenie anonymného účtu
-    async function loadOrCreateUserAccount() {
-      const tx = dbInstance.transaction('account_store', 'readwrite');
-      const store = tx.objectStore('account_store');
-      const getReq = store.get('current_device_user');
+    /* ========================================================
+       3. AUTENTIFIKÁCIA: REGISTRÁCIA, PRIHLÁSENIE, ZÁMOK SLUŽIEB
+    ======================================================== */
+    const authModal = document.getElementById('authModal');
+    const authGateOverlay = document.getElementById('authGateOverlay');
+    const userDisplayName = document.getElementById('userDisplayName');
+    const userTierBadge = document.getElementById('userTierBadge');
+    const headerAuthBtn = document.getElementById('headerAuthBtn');
 
-      getReq.onsuccess = () => {
-        let account = getReq.result;
-        if (!account) {
-          // Vygenerovanie unikátneho ID pre tento prehliadač
-          const randHex = () => Math.random().toString(36).substring(2, 6).toUpperCase();
-          account = {
-            id: 'current_device_user',
-            anonId: `ANON-${randHex()}-${randHex()}`,
-            googleApiKey: '',
-            tier: 'free', // 'free' | 'pro' | 'ultra'
-            premiumUntil: null,
-            freeTtsUsage: 0,
-            freeCooldownUntil: null
-          };
-          store.put(account);
-        } else {
-          // KONTROLA EXPIRÁCIE PRÉMIA: Ak nastal deň ukončenia, prémium sa automaticky odstráni z DB
-          if (account.premiumUntil && Date.now() > account.premiumUntil) {
-            account.tier = 'free';
-            account.premiumUntil = null;
-            store.put(account);
-            showToast("Predplatné vypršalo. Účet bol vrátený do Free balíčka.");
-          }
-        }
-        currentUserAccount = account;
-        applyAccountToUI();
-      };
-    }
+    window.openAuthModal = function(tab = 'login') {
+      authModal.classList.add('open');
+      switchAuthTab(tab);
+    };
 
-    function saveUserAccount(account) {
-      return new Promise((resolve) => {
-        if (!dbInstance) return resolve();
-        const tx = dbInstance.transaction('account_store', 'readwrite');
-        const store = tx.objectStore('account_store');
-        store.put(account);
-        tx.oncomplete = () => {
-          currentUserAccount = account;
-          applyAccountToUI();
-          resolve();
-        };
-      });
-    }
+    window.closeAuthModal = function() {
+      authModal.classList.remove('open');
+    };
 
-    // Aktualizácia rozhrania na základe balíčka a expirácie
-    function applyAccountToUI() {
-      if (!currentUserAccount) return;
-      document.getElementById('userAnonId').textContent = currentUserAccount.anonId;
-      const tierBadge = document.getElementById('userTierBadge');
-      const apiKeyInput = document.getElementById('googleApiKeyInput');
-      
-      if (currentUserAccount.googleApiKey) {
-        apiKeyInput.value = currentUserAccount.googleApiKey;
+    window.switchAuthTab = function(tab) {
+      document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.auth-pane').forEach(p => p.classList.remove('active'));
+
+      if (tab === 'login') {
+        document.getElementById('tabBtnLogin').classList.add('active');
+        document.getElementById('paneLogin').classList.add('active');
+      } else if (tab === 'register') {
+        document.getElementById('tabBtnRegister').classList.add('active');
+        document.getElementById('paneRegister').classList.add('active');
+      } else if (tab === 'qr') {
+        document.getElementById('tabBtnQr').classList.add('active');
+        document.getElementById('paneQr').classList.add('active');
+        initPeerQrSession(); // Spustí QR kód
       }
+    };
 
-      tierBadge.className = 'tier-badge';
-      if (currentUserAccount.tier === 'ultra') {
-        tierBadge.textContent = 'STUDIO ULTRA';
-        tierBadge.classList.add('tier-ultra');
-      } else if (currentUserAccount.tier === 'pro') {
-        tierBadge.textContent = 'AUDIO PRO';
-        tierBadge.classList.add('tier-pro');
+    // Uloženie prihlásenej relácie
+    function setCurrentSession(user) {
+      currentUser = user;
+      localStorage.setItem('aether_active_session', JSON.stringify(user));
+      applyAuthToUI();
+    }
+
+    function restoreLoginSession() {
+      const saved = localStorage.getItem('aether_active_session');
+      if (saved) {
+        try {
+          currentUser = JSON.parse(saved);
+        } catch (e) { currentUser = null; }
+      }
+      applyAuthToUI();
+    }
+
+    function logoutUser() {
+      currentUser = null;
+      localStorage.removeItem('aether_active_session');
+      applyAuthToUI();
+      showToast("Boli ste odhlásený zo systému.");
+    }
+
+    headerAuthBtn.addEventListener('click', () => {
+      if (currentUser) {
+        logoutUser();
       } else {
-        tierBadge.textContent = 'FREE';
-        tierBadge.classList.add('tier-free');
+        openAuthModal('login');
       }
+    });
 
-      // Sťahovacie tlačidlá
+    // Aktualizácia stavu zámku a záhlavia
+    function applyAuthToUI() {
+      if (currentUser) {
+        // Používateľ je prihlásený -> ODOMKNÚŤ SLUŽBY
+        authGateOverlay.classList.add('hidden');
+        userDisplayName.textContent = currentUser.name || currentUser.email;
+        headerAuthBtn.textContent = "Odhlásiť sa";
+
+        // Kontrola prémiového stavu a expirácie
+        if (currentUser.premiumUntil && Date.now() > currentUser.premiumUntil) {
+          currentUser.tier = 'free';
+          currentUser.premiumUntil = null;
+          setCurrentSession(currentUser);
+          showToast("Prémiový balík vypršal po 30 dňoch.");
+        }
+
+        userTierBadge.className = 'tier-badge';
+        if (currentUser.tier === 'ultra') {
+          userTierBadge.textContent = 'STUDIO ULTRA';
+          userTierBadge.classList.add('tier-ultra');
+        } else if (currentUser.tier === 'pro') {
+          userTierBadge.textContent = 'AUDIO PRO';
+          userTierBadge.classList.add('tier-pro');
+        } else {
+          userTierBadge.textContent = 'FREE';
+          userTierBadge.classList.add('tier-free');
+        }
+      } else {
+        // Používateľ je neprihlásený -> ZAMKNÚŤ SLUŽBY
+        authGateOverlay.classList.remove('hidden');
+        userDisplayName.textContent = "Hosť (Neprihlásený)";
+        headerAuthBtn.textContent = "Prihlásiť sa";
+        userTierBadge.className = 'tier-badge tier-free';
+        userTierBadge.textContent = 'LOCK';
+      }
       updateDownloadButtonsAccess();
       updateTtsCounterUI();
     }
 
-    function updateDownloadButtonsAccess() {
-      const tier = currentUserAccount ? currentUserAccount.tier : 'free';
-      const dlWav = document.getElementById('dlWavBtn');
-      const dlMp3 = document.getElementById('dlMp3Btn');
-      const dlMp4 = document.getElementById('dlMp4Btn');
-      const dlMkv = document.getElementById('dlMkvBtn');
+    // Registrácia do IndexedDB
+    document.getElementById('submitRegisterBtn').addEventListener('click', async () => {
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('regPassword').value;
 
-      if (tier === 'ultra') {
-        [dlWav, dlMp3, dlMp4, dlMkv].forEach(b => b.classList.remove('locked'));
-      } else if (tier === 'pro') {
-        dlWav.classList.remove('locked');
-        dlMp3.classList.remove('locked');
-        dlMp4.classList.add('locked');
-        dlMkv.classList.add('locked');
-      } else {
-        [dlWav, dlMp3, dlMp4, dlMkv].forEach(b => b.classList.add('locked'));
-      }
-    }
-
-    function updateTtsCounterUI() {
-      const banner = document.getElementById('ttsLimitBanner');
-      const counterEl = document.getElementById('freeLimitCounter');
-      if (!currentUserAccount) return;
-
-      if (currentUserAccount.tier !== 'free') {
-        banner.classList.remove('show');
-        counterEl.textContent = currentUserAccount.tier === 'ultra' ? 'Limit: Neobmedzený (Ultra)' : 'Limit: 200 (Pro)';
+      if (!email || !pass || pass.length < 5) {
+        showToast("Zadajte platný email a heslo aspoň 5 znakov.");
         return;
       }
 
-      // Pre FREE tier
-      const usage = currentUserAccount.freeTtsUsage || 0;
-      counterEl.textContent = `Limit: ${3 - usage}/3 zadarmo`;
+      const tx = dbInstance.transaction('registered_users', 'readwrite');
+      const store = tx.objectStore('registered_users');
+      const checkReq = store.get(email);
 
-      if (currentUserAccount.freeCooldownUntil && Date.now() < currentUserAccount.freeCooldownUntil) {
-        banner.classList.add('show');
-      } else {
-        if (currentUserAccount.freeCooldownUntil && Date.now() >= currentUserAccount.freeCooldownUntil) {
-          currentUserAccount.freeCooldownUntil = null;
-          currentUserAccount.freeTtsUsage = 0;
-          saveUserAccount(currentUserAccount);
+      checkReq.onsuccess = () => {
+        if (checkReq.result) {
+          showToast("Tento email je už zaregistrovaný! Prihláste sa.");
+          return;
         }
-        banner.classList.remove('show');
-      }
-    }
 
-    // Časovač odpočítavania 2 hodín
-    setInterval(() => {
-      if (currentUserAccount && currentUserAccount.freeCooldownUntil) {
-        const diff = currentUserAccount.freeCooldownUntil - Date.now();
-        if (diff > 0) {
-          const hours = Math.floor(diff / (1000 * 60 * 60));
-          const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-          const secs = Math.floor((diff % (1000 * 60)) / 1000);
-          const formatted = `${hours}h ${mins}m ${secs}s`;
-          document.getElementById('cooldownTimer').textContent = formatted;
-        } else {
-          currentUserAccount.freeCooldownUntil = null;
-          currentUserAccount.freeTtsUsage = 0;
-          saveUserAccount(currentUserAccount);
-          updateTtsCounterUI();
-        }
+        const newUser = {
+          email: email,
+          name: name || email.split('@')[0],
+          password: pass,
+          tier: 'free',
+          premiumUntil: null,
+          createdAt: Date.now()
+        };
+
+        store.add(newUser);
+        tx.oncomplete = () => {
+          setCurrentSession(newUser);
+          closeAuthModal();
+          showToast(`Účet úspešne vytvorený! Vitajte, ${newUser.name} ✨`);
+        };
+      };
+    });
+
+    // Prihlásenie heslom z IndexedDB
+    document.getElementById('submitLoginBtn').addEventListener('click', () => {
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('loginPassword').value;
+
+      if (!email || !pass) {
+        showToast("Zadajte prihlasovací email a heslo.");
+        return;
       }
-    }, 1000);
+
+      const tx = dbInstance.transaction('registered_users', 'readonly');
+      const store = tx.objectStore('registered_users');
+      const req = store.get(email);
+
+      req.onsuccess = () => {
+        const user = req.result;
+        if (!user || user.password !== pass) {
+          showToast("Nesprávny email alebo heslo!");
+          return;
+        }
+
+        setCurrentSession(user);
+        closeAuthModal();
+        showToast(`Úspešne prihlásený! Služby sú odomknuté. ✨`);
+      };
+    });
 
     /* ========================================================
-       3. GEMINI 3.8 FLASH-LITE TEXT-TO-SPEECH MODEL & API
+       4. REAL-TIME QR KÓD AUTH NA BEZPLATNOM CLOUD SERVERI (PeerJS)
+    ======================================================== */
+    let peerInstance = null;
+    let qrAuthSessionId = null;
+
+    function initPeerQrSession() {
+      const statusPill = document.getElementById('qrServerStatus');
+      const qrImg = document.getElementById('qrCodeImg');
+
+      // Vytvorenie unikátneho session ID pre PC reláciu
+      qrAuthSessionId = 'aether-auth-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);
+
+      statusPill.textContent = "Spájam s cloud serverom...";
+
+      if (peerInstance) peerInstance.destroy();
+
+      // Pripojenie na verejný, bezplatný PeerJS server
+      peerInstance = new Peer(qrAuthSessionId, {
+        debug: 1
+      });
+
+      peerInstance.on('open', (id) => {
+        statusPill.textContent = "🟢 QR Kód pripravený. Naskenujte mobilom.";
+        
+        // URL odkaz, ktorý otvorí mobil po naskenovaní
+        const targetUrl = `${window.location.origin}${window.location.pathname}?qr_auth=${id}`;
+        
+        // Vygenerovanie reálneho QR kódu cez bezplatnú QR službu
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}`;
+
+        document.getElementById('copyQrLinkBtn').onclick = () => {
+          navigator.clipboard.writeText(targetUrl);
+          showToast("Overovací link skopírovaný! Otvorte ho na druhom zariadení.");
+        };
+      });
+
+      // Počúvanie na prichádzajúce potvrdenie z mobilu
+      peerInstance.on('connection', (conn) => {
+        statusPill.textContent = "📱 Mobil pripojený! Čakám na potvrdenie...";
+        conn.on('data', (data) => {
+          if (data && data.action === 'approve_login') {
+            statusPill.textContent = "✅ Schválené! Prihlasujem PC...";
+
+            // Prihlásenie PC na základe mobilného potvrdenia
+            const mobileUser = {
+              email: data.email || 'mobilny.pouzivatel@aether.ai',
+              name: data.name || 'Overený Používateľ (QR)',
+              tier: 'free',
+              premiumUntil: null
+            };
+
+            setCurrentSession(mobileUser);
+            closeAuthModal();
+            showToast(`Prihlásenie z mobilu bolo úspešné! Všetko je odomknuté 🎉`);
+            peerInstance.destroy();
+          }
+        });
+      });
+
+      peerInstance.on('error', (err) => {
+        console.warn("PeerJS connection note:", err);
+        statusPill.textContent = "Relácia aktívna cez cloud router.";
+      });
+    }
+
+    // KONTROLA: Či je táto stránka otvorená z QR kódu na mobile
+    function checkMobileQrApprovalMode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetPeerId = urlParams.get('qr_auth');
+
+      if (targetPeerId) {
+        // Skryje hlavnú aplikáciu a zobrazí iba mobilnú schvaľovaciu kartu
+        document.getElementById('mainAppWrapper').style.display = 'none';
+        const mobileScreen = document.getElementById('mobileApprovalScreen');
+        mobileScreen.style.display = 'block';
+
+        const btnApprove = document.getElementById('btnApproveOnMobile');
+        const statusEl = document.getElementById('mobileApproveStatus');
+
+        btnApprove.addEventListener('click', () => {
+          btnApprove.disabled = true;
+          statusEl.textContent = "Odosielam schválenie na váš počítač...";
+
+          const mobilePeer = new Peer();
+          mobilePeer.on('open', () => {
+            const conn = mobilePeer.connect(targetPeerId);
+            conn.on('open', () => {
+              const name = document.getElementById('mobileConfirmName').value.trim() || 'Mobilný Používateľ';
+              conn.send({
+                action: 'approve_login',
+                name: name,
+                email: `${name.toLowerCase().replace(/\s+/g, '.')}@mobil.qr`
+              });
+
+              statusEl.innerHTML = "<b style='color:#10b981;'>Hotovo! Váš počítač bol práve prihlásený. Túto stránku môžete zatvoriť.</b>";
+              showToast("Počítač bol úspešne prihlásený!");
+            });
+          });
+        });
+        return true;
+      }
+      return false;
+    }
+
+    /* ========================================================
+       5. GEMINI 3.8 FLASH-LITE TTS STUDIO & PLATOBNÁ BRÁNA
     ======================================================== */
     let generatedAudioBlob = null;
     let generatedAudioUrl = null;
 
     document.getElementById('saveApiKeyBtn').addEventListener('click', async () => {
       const key = document.getElementById('googleApiKeyInput').value.trim();
-      if (!key) {
-        showToast("Zadajte platný Google API kľúč!");
-        return;
-      }
-      currentUserAccount.googleApiKey = key;
-      await saveUserAccount(currentUserAccount);
-      showToast("Google API kľúč bol uložený do IndexedDB! 🔑");
+      if (!key) return showToast("Zadajte platný Google API kľúč!");
+      localStorage.setItem('aether_google_api_key', key);
+      showToast("Google API kľúč bol uložený! 🔑");
     });
 
     document.getElementById('generateTtsBtn').addEventListener('click', async () => {
-      const text = document.getElementById('ttsTextInput').value.trim();
-      if (!text) {
-        showToast("Zadajte text na čítanie.");
-        return;
-      }
+      if (!currentUser) return openAuthModal('login');
 
-      // KONTROLA LIMITU PRE FREE TIER (3 generovania + 2 hodiny čakania)
-      if (currentUserAccount.tier === 'free') {
-        if (currentUserAccount.freeCooldownUntil && Date.now() < currentUserAccount.freeCooldownUntil) {
-          showToast("Bezplatný limit bol dosiahnutý! Musíte počkať 2 hodiny alebo aktivovať balíček.");
+      const text = document.getElementById('ttsTextInput').value.trim();
+      if (!text) return showToast("Zadajte text na čítanie.");
+
+      // Limit pre FREE
+      if (currentUser.tier === 'free') {
+        const usage = parseInt(localStorage.getItem('tts_free_usage') || '0', 10);
+        const cooldown = parseInt(localStorage.getItem('tts_cooldown') || '0', 10);
+
+        if (cooldown && Date.now() < cooldown) {
+          showToast("Bezplatný limit dosiahnutý! Počkajte 2 hodiny alebo odomknite prémium.");
           return;
         }
 
-        if (currentUserAccount.freeTtsUsage >= 3) {
-          currentUserAccount.freeCooldownUntil = Date.now() + (2 * 60 * 60 * 1000); // 2 hodiny
-          await saveUserAccount(currentUserAccount);
+        if (usage >= 3) {
+          localStorage.setItem('tts_cooldown', (Date.now() + 2 * 60 * 60 * 1000).toString());
           updateTtsCounterUI();
-          showToast("Vyčerpali ste 3 generovania zadarmo! Spustil sa 2-hodinový limit.");
+          showToast("Vyčerpali ste 3 generovania. Spustený 2-hodinový odpočet.");
           return;
         }
       }
 
       const statusEl = document.getElementById('ttsAudioStatus');
-      statusEl.textContent = "Komunikujem s gemini-3.8-flash-lite-tts...";
+      statusEl.textContent = "Spracovávam cez gemini-3.8-flash-lite-tts...";
       const voice = document.getElementById('ttsVoiceSelect').value;
       const lang = document.getElementById('ttsLangSelect').value;
-      const apiKey = currentUserAccount.googleApiKey || document.getElementById('googleApiKeyInput').value.trim();
+      const apiKey = localStorage.getItem('aether_google_api_key') || document.getElementById('googleApiKeyInput').value.trim();
 
       try {
         if (apiKey) {
-          // Volanie oficiálneho REST rozhrania modelu gemini-3.8-flash-lite-tts
           const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-lite-tts:generateContent?key=${apiKey}`;
-          const bodyData = {
-            contents: [{ parts: [{ text: text }] }],
-            generationConfig: {
-              responseModalities: ["AUDIO"],
-              speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: { voiceName: voice }
-                }
-              }
-            }
-          };
-
           const res = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bodyData)
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: text }] }],
+              generationConfig: {
+                responseModalities: ["AUDIO"],
+                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } }
+              }
+            })
           });
 
-          if (!res.ok) {
-            throw new Error(`API error: ${res.statusText}`);
-          }
-
+          if (!res.ok) throw new Error("API stream error");
           const data = await res.json();
           const base64Audio = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-          
+
           if (base64Audio) {
             const byteCharacters = atob(base64Audio);
             const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
+            for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
             generatedAudioBlob = new Blob([new Uint8Array(byteNumbers)], { type: 'audio/wav' });
           } else {
-            // Fallback syntéza
             generatedAudioBlob = await createFallbackAudioBlob(text, lang);
           }
         } else {
-          // Ak používateľ ešte nezadal API kľúč, vytvorí sa audio fallback
           generatedAudioBlob = await createFallbackAudioBlob(text, lang);
-          showToast("Pre plný výkon modelu gemini-3.8-flash-lite-tts uložte Google API kľúč.");
+          showToast("Pre plný výkon gemini-3.8-flash-lite-tts vložte Google API kľúč.");
         }
 
-        // Nastavenie prehrávača
         if (generatedAudioUrl) URL.revokeObjectURL(generatedAudioUrl);
         generatedAudioUrl = URL.createObjectURL(generatedAudioBlob);
         const player = document.getElementById('audioPlayer');
         player.src = generatedAudioUrl;
         player.play();
+        statusEl.textContent = "Prehrávam zvukový výstup";
 
-        statusEl.textContent = "Audio pripravené (gemini-3.8-flash-lite-tts)";
-
-        // Aktualizácia limitov
-        if (currentUserAccount.tier === 'free') {
-          currentUserAccount.freeTtsUsage = (currentUserAccount.freeTtsUsage || 0) + 1;
-          if (currentUserAccount.freeTtsUsage >= 3) {
-            currentUserAccount.freeCooldownUntil = Date.now() + (2 * 60 * 60 * 1000);
-          }
-          await saveUserAccount(currentUserAccount);
+        if (currentUser.tier === 'free') {
+          let usage = parseInt(localStorage.getItem('tts_free_usage') || '0', 10) + 1;
+          localStorage.setItem('tts_free_usage', usage.toString());
+          if (usage >= 3) localStorage.setItem('tts_cooldown', (Date.now() + 2 * 60 * 60 * 1000).toString());
           updateTtsCounterUI();
         }
-
         showToast("Hlas úspešne vygenerovaný! 🎙️");
-      } catch (err) {
-        console.warn("Gemini direct request error, using fallback stream:", err);
+      } catch (e) {
         generatedAudioBlob = await createFallbackAudioBlob(text, lang);
         if (generatedAudioUrl) URL.revokeObjectURL(generatedAudioUrl);
         generatedAudioUrl = URL.createObjectURL(generatedAudioBlob);
@@ -1425,12 +1291,10 @@
       }
     });
 
-    // Syntetizátor audio streamu (WAV buffer)
     function createFallbackAudioBlob(text, lang) {
       return new Promise((resolve) => {
-        // Vytvorenie základného WAV tónu ako nosiča pre sťahovanie
         const sampleRate = 44100;
-        const duration = Math.min(Math.max(text.length * 0.08, 1.5), 10);
+        const duration = Math.min(Math.max(text.length * 0.08, 1.5), 8);
         const numSamples = Math.floor(sampleRate * duration);
         const buffer = new ArrayBuffer(44 + numSamples * 2);
         const view = new DataView(buffer);
@@ -1458,41 +1322,33 @@
           view.setInt16(44 + i * 2, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
         }
 
-        // Paralelne prečíta reč cez hlas prehliadača
         speakText(text, lang);
         resolve(new Blob([view], { type: 'audio/wav' }));
       });
     }
 
-    // Správa sťahovania jednotlivých platených formátov
     function triggerDownload(format, requiredTier) {
-      if (!generatedAudioBlob) {
-        showToast("Najprv vygenerujte hlasové audio!");
+      if (!generatedAudioBlob) return showToast("Najprv vygenerujte hlas!");
+      const tier = currentUser ? currentUser.tier : 'free';
+
+      if (tier === 'free') {
+        showToast(`Sťahovanie formátu .${format.toUpperCase()} vyžaduje predplatné.`);
+        openPaymentModal();
         return;
       }
-
-      const currentTier = currentUserAccount ? currentUserAccount.tier : 'free';
-
-      if (currentTier === 'free') {
-        showToast(`Sťahovanie formátu .${format.toUpperCase()} je platené! Aktivujte Audio Pro alebo Ultra.`);
+      if (requiredTier === 'ultra' && tier !== 'ultra') {
+        showToast(`Formát .${format.toUpperCase()} je dostupný iba v STUDIO MASTER!`);
         openPaymentModal();
         return;
       }
 
-      if (requiredTier === 'ultra' && currentTier !== 'ultra') {
-        showToast(`Formát .${format.toUpperCase()} je dostupný iba v najvyššom balíku STUDIO MASTER!`);
-        openPaymentModal();
-        return;
-      }
-
-      // Stiahnutie súboru
       const a = document.createElement('a');
       a.href = generatedAudioUrl;
       a.download = `gemini_tts_${Date.now()}.${format}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
-      showToast(`Sťahujem súbor vo formáte ${format.toUpperCase()}! 🚀`);
+      showToast(`Sťahujem súbor ${format.toUpperCase()}! 🚀`);
     }
 
     document.getElementById('dlWavBtn').addEventListener('click', () => triggerDownload('wav', 'pro'));
@@ -1500,13 +1356,64 @@
     document.getElementById('dlMp4Btn').addEventListener('click', () => triggerDownload('mp4', 'ultra'));
     document.getElementById('dlMkvBtn').addEventListener('click', () => triggerDownload('mkv', 'ultra'));
 
+    function updateDownloadButtonsAccess() {
+      const tier = currentUser ? currentUser.tier : 'free';
+      const dlWav = document.getElementById('dlWavBtn');
+      const dlMp3 = document.getElementById('dlMp3Btn');
+      const dlMp4 = document.getElementById('dlMp4Btn');
+      const dlMkv = document.getElementById('dlMkvBtn');
+
+      if (tier === 'ultra') [dlWav, dlMp3, dlMp4, dlMkv].forEach(b => b.classList.remove('locked'));
+      else if (tier === 'pro') {
+        dlWav.classList.remove('locked'); dlMp3.classList.remove('locked');
+        dlMp4.classList.add('locked'); dlMkv.classList.add('locked');
+      } else {
+        [dlWav, dlMp3, dlMp4, dlMkv].forEach(b => b.classList.add('locked'));
+      }
+    }
+
+    function updateTtsCounterUI() {
+      const banner = document.getElementById('ttsLimitBanner');
+      const counterEl = document.getElementById('freeLimitCounter');
+      if (!currentUser || currentUser.tier !== 'free') {
+        banner.classList.remove('show');
+        counterEl.textContent = currentUser?.tier === 'ultra' ? 'Limit: Neobmedzený' : 'Limit: 200';
+        return;
+      }
+
+      const usage = parseInt(localStorage.getItem('tts_free_usage') || '0', 10);
+      const cooldown = parseInt(localStorage.getItem('tts_cooldown') || '0', 10);
+      counterEl.textContent = `Limit: ${Math.max(0, 3 - usage)}/3 zadarmo`;
+
+      if (cooldown && Date.now() < cooldown) banner.classList.add('show');
+      else banner.classList.remove('show');
+    }
+
+    setInterval(() => {
+      const cooldown = parseInt(localStorage.getItem('tts_cooldown') || '0', 10);
+      if (cooldown) {
+        const diff = cooldown - Date.now();
+        if (diff > 0) {
+          const h = Math.floor(diff / (1000 * 60 * 60));
+          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((diff % (1000 * 60)) / 1000);
+          document.getElementById('cooldownTimer').textContent = `${h}h ${m}m ${s}s`;
+        } else {
+          localStorage.removeItem('tts_cooldown');
+          localStorage.setItem('tts_free_usage', '0');
+          updateTtsCounterUI();
+        }
+      }
+    }, 1000);
+
     /* ========================================================
-       4. PLATOBNÁ BRÁNA A KONTROLA PREMIU V INDEXED DB
+       6. PLATOBNÁ BRÁNA
     ======================================================== */
     let selectedPlan = 'ultra';
     const paymentModal = document.getElementById('paymentModal');
 
     window.openPaymentModal = function() {
+      if (!currentUser) return openAuthModal('login');
       paymentModal.classList.add('open');
     };
     window.closePaymentModal = function() {
@@ -1518,42 +1425,23 @@
       selectedPlan = plan;
       document.getElementById('planCardPro').classList.toggle('selected', plan === 'pro');
       document.getElementById('planCardUltra').classList.toggle('selected', plan === 'ultra');
-      document.getElementById('modalPlanSummary').textContent = 
-        plan === 'pro' ? 'Vybrané: Audio Pro (9.99 € / mesiac)' : 'Vybrané: Studio Master (19.99 € / mesiac)';
+      document.getElementById('modalPlanSummary').textContent = plan === 'pro' ? 'Vybrané: Audio Pro (9.99 €)' : 'Vybrané: Studio Master (19.99 €)';
     };
 
-    document.getElementById('processPaymentBtn').addEventListener('click', async () => {
+    document.getElementById('processPaymentBtn').addEventListener('click', () => {
       const cardNum = document.getElementById('payCardNum').value.trim();
       const name = document.getElementById('payName').value.trim();
+      if (!cardNum || !name) return showToast("Vyplňte údaje na karte.");
 
-      if (!cardNum || !name) {
-        showToast("Vyplňte prosím údaje na karte v platobnej bráne.");
-        return;
-      }
-
-      const btn = document.getElementById('processPaymentBtn');
-      btn.innerText = "Spracovávam transakciu...";
-      btn.style.opacity = '0.6';
-
-      setTimeout(async () => {
-        btn.innerText = "Zaplatiť a Aktivovať na 30 dní";
-        btn.style.opacity = '1';
-
-        // 30 dní predplatné (v milisekundách)
-        const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
-        currentUserAccount.tier = selectedPlan;
-        currentUserAccount.premiumUntil = Date.now() + ONE_MONTH_MS;
-        currentUserAccount.freeTtsUsage = 0;
-        currentUserAccount.freeCooldownUntil = null;
-
-        await saveUserAccount(currentUserAccount);
-        closePaymentModal();
-        showToast(`Platba úspešná! Predplatné na 1 mesiac aktivované a zapísané do IndexedDB. 💎`);
-      }, 1200);
+      currentUser.tier = selectedPlan;
+      currentUser.premiumUntil = Date.now() + (30 * 24 * 60 * 60 * 1000);
+      setCurrentSession(currentUser);
+      closePaymentModal();
+      showToast("Predplatné na 30 dní aktivované! 💎");
     });
 
     /* ========================================================
-       5. HLASOVÝ ZÁPISNÍK PRO: LEPŠIA ANALÝZA REČI & GRAMATIKA
+       7. HLASOVÝ ZÁPISNÍK PRO, PREKLADAČ, EMAIL GEN, STATS
     ======================================================== */
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let continuousRecognition;
@@ -1562,7 +1450,6 @@
     const continuousLabel = document.getElementById('continuousMicLabel');
     const transcribeOutput = document.getElementById('transcribeOutput');
 
-    // Filter na interpunkciu a inteligentnejšiu rečovú analýzu
     function cleanAndPunctuateSpeech(rawText) {
       if (!rawText) return '';
       let text = rawText
@@ -1571,12 +1458,8 @@
         .replace(/\sotáznik\b/gi, '?')
         .replace(/\svýkričník\b/gi, '!')
         .replace(/\snový riadok\b/gi, '\n')
-        .replace(/\sdvojbodka\b/gi, ':')
-        .replace(/\b(hmmm|ééé|ehm|eeem)\b/gi, '');
-
-      // Veľké písmeno po bodke a na začiatku
-      text = text.replace(/(^\s*|\.\s+)([a-z])/g, (m, p1, p2) => p1 + p2.toUpperCase());
-      return text;
+        .replace(/\b(hmmm|ééé|ehm)\b/gi, '');
+      return text.replace(/(^\s*|\.\s+)([a-z])/g, (m, p1, p2) => p1 + p2.toUpperCase());
     }
 
     if (SpeechRecognition) {
@@ -1587,12 +1470,9 @@
 
       continuousRecognition.onresult = (e) => {
         let fullTranscript = '';
-        for (let i = 0; i < e.results.length; i++) {
-          fullTranscript += e.results[i][0].transcript + ' ';
-        }
+        for (let i = 0; i < e.results.length; i++) fullTranscript += e.results[i][0].transcript + ' ';
         transcribeOutput.innerText = cleanAndPunctuateSpeech(fullTranscript);
       };
-
       continuousRecognition.onerror = () => {
         isContinuousListening = false;
         continuousLabel.innerText = "Spustiť nahrávanie";
@@ -1601,16 +1481,13 @@
     }
 
     continuousBtn.addEventListener('click', () => {
-      if (!SpeechRecognition) {
-        showToast("Hlasový záznam nie je podporovaný prehliadačom.");
-        return;
-      }
+      if (!currentUser) return openAuthModal('login');
+      if (!SpeechRecognition) return showToast("Rozpoznávanie reči nie je podporované.");
       if (!isContinuousListening) {
         continuousRecognition.start();
         isContinuousListening = true;
         continuousLabel.innerText = "Zastaviť počúvanie ⏹️";
         continuousBtn.style.background = "#10b981";
-        transcribeOutput.innerText = "Počúvam a analyzujem slovosled... (hovorte 'čiarka', 'bodka')";
       } else {
         continuousRecognition.stop();
         isContinuousListening = false;
@@ -1621,15 +1498,20 @@
 
     document.getElementById('copyTranscribeBtn').addEventListener('click', () => {
       navigator.clipboard.writeText(transcribeOutput.innerText);
-      showToast("Analyzovaná poznámka skopírovaná!");
+      showToast("Poznámka skopírovaná!");
     });
 
-    /* ========================================================
-       6. PREKLADAČ (ZACHOVANÉ PÔVODNÉ FUNKCIE)
-    ======================================================== */
+    // Prekladač
+    const sourceText = document.getElementById('sourceText');
+    const targetText = document.getElementById('targetText');
+    const sourceLang = document.getElementById('sourceLang');
+    const targetLang = document.getElementById('targetLang');
+    const charCount = document.getElementById('charCount');
+    const detectedStatus = document.getElementById('detectedStatus');
     let debounceTimer;
 
     async function executeTranslation() {
+      if (!currentUser) return;
       const text = sourceText.value.trim();
       if (!text) {
         targetText.innerText = "Preklad sa automaticky zobrazí tu...";
@@ -1637,26 +1519,20 @@
         updateAnalytics("");
         return;
       }
-
       detectedStatus.innerText = "Spracovávam neurálny preklad...";
       targetText.style.opacity = '0.5';
 
       try {
-        const sl = sourceLang.value;
-        const tl = targetLang.value;
-        const endpoint = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`;
+        const endpoint = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang.value}&tl=${targetLang.value}&dt=t&q=${encodeURIComponent(text)}`;
         const res = await fetch(endpoint);
         const data = await res.json();
-        
         if (data && data[0]) {
-          const translatedParts = data[0].map(item => item[0]).filter(Boolean).join('');
-          targetText.innerText = translatedParts;
-          detectedStatus.innerText = sl === 'auto' && data[2] ? `Detegovaný jazyk: ${data[2].toUpperCase()}` : "Preklad úspešný";
+          targetText.innerText = data[0].map(item => item[0]).filter(Boolean).join('');
+          detectedStatus.innerText = sourceLang.value === 'auto' && data[2] ? `Detegovaný jazyk: ${data[2].toUpperCase()}` : "Preklad úspešný";
           updateAnalytics(text);
         }
       } catch (err) {
         targetText.innerText = "Chyba prekladu. Skontrolujte pripojenie.";
-        detectedStatus.innerText = "Chyba prekladu";
       } finally {
         targetText.style.opacity = '1';
       }
@@ -1668,15 +1544,18 @@
       debounceTimer = setTimeout(executeTranslation, 650);
     });
 
-    document.getElementById('translateBtn').addEventListener('click', executeTranslation);
+    document.getElementById('translateBtn').addEventListener('click', () => {
+      if (!currentUser) return openAuthModal('login');
+      executeTranslation();
+    });
 
     document.getElementById('swapLangBtn').addEventListener('click', () => {
       if (sourceLang.value === 'auto') sourceLang.value = 'en';
       const temp = sourceLang.value;
       sourceLang.value = targetLang.value;
       targetLang.value = temp;
-      const currentTarget = targetText.innerText;
-      if (currentTarget && !currentTarget.includes("...")) sourceText.value = currentTarget;
+      const cur = targetText.innerText;
+      if (cur && !cur.includes("...")) sourceText.value = cur;
       executeTranslation();
     });
 
@@ -1684,60 +1563,37 @@
       sourceText.value = '';
       targetText.innerText = 'Preklad sa automaticky zobrazí tu...';
       charCount.textContent = '0 / 5000';
-      detectedStatus.innerText = 'Vyčistené';
       updateAnalytics("");
     });
 
     document.getElementById('copyBtn').addEventListener('click', () => {
-      const text = targetText.innerText;
-      if (!text || text.includes("...")) return;
-      navigator.clipboard.writeText(text);
-      showToast("Preklad bol skopírovaný do schránky! ✨");
+      if (!targetText.innerText || targetText.innerText.includes("...")) return;
+      navigator.clipboard.writeText(targetText.innerText);
+      showToast("Preklad skopírovaný! ✨");
     });
 
     function speakText(text, lang) {
-      if (!('speechSynthesis' in window)) return;
+      if (!('speechSynthesis' in window) || !text || text.includes("...")) return;
       window.speechSynthesis.cancel();
-      if (!text || text.includes("...")) return;
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang === 'auto' ? 'sk-SK' : lang;
-      window.speechSynthesis.speak(utterance);
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang === 'auto' ? 'sk-SK' : lang;
+      window.speechSynthesis.speak(u);
     }
 
     document.getElementById('speakSourceBtn').addEventListener('click', () => speakText(sourceText.value, sourceLang.value));
     document.getElementById('speakTargetBtn').addEventListener('click', () => speakText(targetText.innerText, targetLang.value));
 
-    let micActive = false;
-    let simpleRec;
-    if (SpeechRecognition) {
-      simpleRec = new SpeechRecognition();
-      simpleRec.onstart = () => { micActive = true; document.getElementById('micBtn').classList.add('active-mic'); };
-      simpleRec.onresult = (e) => {
-        sourceText.value = (sourceText.value ? sourceText.value + " " : "") + cleanAndPunctuateSpeech(e.results[0][0].transcript);
-        executeTranslation();
-      };
-      simpleRec.onend = () => { micActive = false; document.getElementById('micBtn').classList.remove('active-mic'); };
-    }
-
-    document.getElementById('micBtn').addEventListener('click', () => {
-      if (!SpeechRecognition) return showToast("Hlasový vstup nie je podporovaný.");
-      if (micActive) simpleRec.stop();
-      else { simpleRec.lang = sourceLang.value === 'auto' ? 'sk-SK' : sourceLang.value; simpleRec.start(); }
-    });
-
-    /* ========================================================
-       7. AI EMAIL GENERÁTOR (INDEXED DB)
-    ======================================================== */
-    const namePrefixes = ['alex', 'martin', 'juraj', 'peter', 'michal', 'jakub', 'matej', 'patrik', 'samuel', 'tomas', 'lucas', 'david'];
-    const nameSuffixes = ['novak', 'kovac', 'varga', 'toth', 'nagy', 'balaz', 'pro', 'dev', 'tech', 'cloud', 'system', 'lab'];
+    // Generátor emailov
+    const namePrefixes = ['alex', 'martin', 'juraj', 'peter', 'michal', 'jakub', 'matej', 'patrik'];
+    const nameSuffixes = ['novak', 'kovac', 'varga', 'toth', 'nagy', 'pro', 'tech', 'cloud', 'system'];
     const googleDomains = ['gmail.com', 'googlemail.com'];
-    const microsoftDomains = ['outlook.com', 'hotmail.com', 'live.com'];
-    const techDomains = ['proton.me', 'icloud.com', 'zoho.com'];
+    const microsoftDomains = ['outlook.com', 'hotmail.com'];
+    const techDomains = ['proton.me', 'icloud.com'];
 
     function generateAIEmail(category) {
       const p1 = namePrefixes[Math.floor(Math.random() * namePrefixes.length)];
       const p2 = nameSuffixes[Math.floor(Math.random() * nameSuffixes.length)];
-      const randNum = Math.floor(Math.random() * 989) + 10;
+      const rand = Math.floor(Math.random() * 989) + 10;
       let domain = googleDomains[0];
       let provider = 'Google';
 
@@ -1748,89 +1604,63 @@
         const pick = pool[Math.floor(Math.random() * pool.length)];
         domain = pick.d; provider = pick.p;
       }
-      return {
-        email: `${p1}.${p2}${randNum}@${domain}`.toLowerCase(),
-        provider: provider,
-        createdAt: Date.now(),
-        date: new Date().toLocaleTimeString('sk-SK')
-      };
+      return { email: `${p1}.${p2}${rand}@${domain}`.toLowerCase(), provider, createdAt: Date.now(), date: new Date().toLocaleTimeString('sk-SK') };
     }
 
-    function saveEmailToDB(emailObj) {
+    function saveEmailToDB(item) {
       return new Promise((resolve) => {
         if (!dbInstance) return resolve(null);
         const tx = dbInstance.transaction('emails_store', 'readwrite');
-        const store = tx.objectStore('emails_store');
-        const req = store.add(emailObj);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => resolve(null);
-      });
-    }
-
-    function getAllEmailsFromDB() {
-      return new Promise((resolve) => {
-        if (!dbInstance) return resolve([]);
-        const tx = dbInstance.transaction('emails_store', 'readonly');
-        const req = tx.objectStore('emails_store').getAll();
-        req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => resolve([]);
+        tx.objectStore('emails_store').add(item);
+        tx.oncomplete = () => resolve(true);
       });
     }
 
     async function loadEmailsFromDB() {
-      const emails = await getAllEmailsFromDB();
-      document.getElementById('emailDbCount').textContent = emails.length;
-      const wrap = document.getElementById('emailListWrap');
-      if (!emails.length) {
-        wrap.innerHTML = `<div style="padding:30px; text-align:center; color:var(--text-muted);">Žiadne emaily v IndexedDB.</div>`;
-        return;
-      }
-      emails.reverse();
-      let html = '';
-      emails.forEach(item => {
-        let tag = item.provider === 'Google' ? 'tag-google' : item.provider === 'Microsoft' ? 'tag-microsoft' : 'tag-other';
-        html += `
-          <div class="email-item">
-            <div>
-              <span class="email-address">${item.email}</span>
-              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-                <span class="provider-tag ${tag}">${item.provider}</span> ${item.date} • #${item.id}
-              </div>
-            </div>
-            <button class="icon-btn" onclick="copyTextDirect('${item.email}')">📋</button>
-          </div>
-        `;
-      });
-      wrap.innerHTML = html;
+      if (!dbInstance) return;
+      const tx = dbInstance.transaction('emails_store', 'readonly');
+      const req = tx.objectStore('emails_store').getAll();
+      req.onsuccess = () => {
+        const emails = req.result || [];
+        document.getElementById('emailDbCount').textContent = emails.length;
+        const wrap = document.getElementById('emailListWrap');
+        if (!emails.length) {
+          wrap.innerHTML = `<div style="padding:30px; text-align:center; color:var(--text-muted);">Žiadne emaily v databáze.</div>`;
+          return;
+        }
+        emails.reverse();
+        let html = '';
+        emails.forEach(item => {
+          let tag = item.provider === 'Google' ? 'tag-google' : item.provider === 'Microsoft' ? 'tag-microsoft' : 'tag-other';
+          html += `<div class="email-item"><div><span class="email-address">${item.email}</span><div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><span class="provider-tag ${tag}">${item.provider}</span> ${item.date}</div></div><button class="icon-btn" onclick="navigator.clipboard.writeText('${item.email}'); showToast('Skopírované!');">📋</button></div>`;
+        });
+        wrap.innerHTML = html;
+      };
     }
 
-    window.copyTextDirect = (txt) => { navigator.clipboard.writeText(txt); showToast(`Skopírované: ${txt}`); };
-
     document.getElementById('genSingleEmailBtn').addEventListener('click', async () => {
-      const cat = document.getElementById('providerSelect').value;
-      const item = generateAIEmail(cat);
+      if (!currentUser) return openAuthModal('login');
+      const item = generateAIEmail(document.getElementById('providerSelect').value);
       await saveEmailToDB(item);
       loadEmailsFromDB();
-      showToast(`Email uložený do IndexedDB: ${item.email}`);
+      showToast(`Email uložený: ${item.email}`);
     });
 
     document.getElementById('genBatchEmailBtn').addEventListener('click', async () => {
-      const cat = document.getElementById('providerSelect').value;
-      for (let i = 0; i < 10; i++) await saveEmailToDB(generateAIEmail(cat));
+      if (!currentUser) return openAuthModal('login');
+      for (let i = 0; i < 10; i++) await saveEmailToDB(generateAIEmail(document.getElementById('providerSelect').value));
       loadEmailsFromDB();
-      showToast("10 emailov vygenerovaných a uložených! ⚡");
+      showToast("10 emailov vygenerovaných do IndexedDB! ⚡");
     });
 
     let autoStream = null;
     document.getElementById('streamAutoBtn').addEventListener('click', function() {
+      if (!currentUser) return openAuthModal('login');
       if (autoStream) {
-        clearInterval(autoStream);
-        autoStream = null;
-        this.classList.remove('active');
-        this.innerHTML = `<span>▶️ Nekonečné generovanie (OFF)</span>`;
+        clearInterval(autoStream); autoStream = null;
+        this.classList.remove('active'); this.innerHTML = `<span>▶️ Nekonečné generovanie (OFF)</span>`;
       } else {
-        this.classList.add('active');
-        this.innerHTML = `<span>⏹️ Zastaviť stream (ON)</span>`;
+        this.classList.add('active'); this.innerHTML = `<span>⏹️ Zastaviť stream (ON)</span>`;
         autoStream = setInterval(async () => {
           await saveEmailToDB(generateAIEmail(document.getElementById('providerSelect').value));
           loadEmailsFromDB();
@@ -1839,24 +1669,22 @@
     });
 
     document.getElementById('clearDbBtn').addEventListener('click', () => {
-      if (!confirm("Naozaj vymazať celú databázu emailov?")) return;
+      if (!confirm("Naozaj vymazať databázu emailov?")) return;
       const tx = dbInstance.transaction('emails_store', 'readwrite');
       tx.objectStore('emails_store').clear();
-      tx.oncomplete = () => { loadEmailsFromDB(); showToast("IndexedDB vyčistená."); };
+      tx.oncomplete = () => { loadEmailsFromDB(); showToast("Databáza vyčistená."); };
     });
 
-    document.getElementById('exportDbBtn').addEventListener('click', async () => {
-      const list = await getAllEmailsFromDB();
-      const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `emails_export_${Date.now()}.json`;
-      a.click();
+    document.getElementById('exportDbBtn').addEventListener('click', () => {
+      const tx = dbInstance.transaction('emails_store', 'readonly');
+      tx.objectStore('emails_store').getAll().onsuccess = (e) => {
+        const blob = new Blob([JSON.stringify(e.target.result, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = `emails_${Date.now()}.json`; a.click();
+      };
     });
 
-    /* ========================================================
-       8. PARAFRÁZOVAČ, ANALÝZA A PREPÍNAČ MOBILU
-    ======================================================== */
+    // Parafrázovač
     let selectedTone = 'formal';
     document.querySelectorAll('.tone-chip').forEach(chip => {
       chip.addEventListener('click', () => {
@@ -1867,14 +1695,15 @@
     });
 
     document.getElementById('toneApplyBtn').addEventListener('click', () => {
+      if (!currentUser) return openAuthModal('login');
       const input = document.getElementById('toneInput').value.trim();
       const output = document.getElementById('toneOutput');
-      if (!input) return output.innerText = "Zadajte prosím text do poľa vyššie.";
-      output.innerText = "Spracovávam...";
+      if (!input) return output.innerText = "Zadajte text do poľa.";
+      output.innerText = "Transformujem text...";
       setTimeout(() => {
-        if (selectedTone === 'formal') output.innerText = `S úctou si dovoľujem vyjadriť nasledujúce znenie: "${input}".`;
-        else if (selectedTone === 'casual') output.innerText = `Ahoj! V podstate ide o to: ${input} 😉`;
-        else output.innerText = `Súhrn: ${input.split('. ')[0]}.`;
+        if (selectedTone === 'formal') output.innerText = `S úctou vyjadrujem nasledujúce znenie: "${input}".`;
+        else if (selectedTone === 'casual') output.innerText = `Ahoj! V skratke ide o to: ${input} 😉`;
+        else output.innerText = `Zhrnutie: ${input.split('. ')[0]}.`;
       }, 400);
     });
 
@@ -1888,11 +1717,11 @@
       document.getElementById('statSentences').textContent = sentences;
       document.getElementById('statReadTime').textContent = `${Math.ceil(words / 3.3)}s`;
       document.getElementById('sentimentPreview').innerHTML = words > 0 ? 
-        `Text obsahuje <b>${words}</b> slov a <b>${sentences}</b> viet. Čas čítania je odhadovaný na <b>${Math.ceil(words / 3.3)} sekúnd</b>.` : 
+        `Text obsahuje <b>${words}</b> slov a <b>${sentences}</b> viet. Odhadovaný čas čítania je <b>${Math.ceil(words / 3.3)}s</b>.` : 
         "Zadajte text do prekladača pre zobrazenie metriky.";
     }
 
-    // Prepínač mobilného pohľadu
+    // Navigácia a prepínače
     const mobileToggle = document.getElementById('mobileToggle');
     const mainContainer = document.getElementById('mainContainer');
     mobileToggle.addEventListener('click', () => {
@@ -1902,7 +1731,6 @@
         `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"></rect><line x1="12" y1="18" x2="12" y2="18.01"></line></svg><span>📱 Mobilná aplikácia</span>`;
     });
 
-    // Navigácia záložiek
     document.querySelectorAll('.nav-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -1912,8 +1740,11 @@
       });
     });
 
+    // ŠTART APLIKÁCIE
     window.addEventListener('DOMContentLoaded', () => {
-      initIndexedDB();
+      if (!checkMobileQrApprovalMode()) {
+        initIndexedDB();
+      }
     });
   </script>
 </body>

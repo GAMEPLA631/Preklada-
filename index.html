@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aether Omni-Suite & QR Cloud Auth</title>
+  <title>Aether Omni-Suite & Gemini 3.8 Flash Pro TTS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <!-- Bezplatná P2P/Cloud knižnica pre WebRTC QR autentifikáciu medzi PC a mobilom -->
+  <!-- Bezplatná cloudová WebRTC knižnica pre QR autentifikáciu -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
   <style>
@@ -106,6 +106,22 @@
     .tier-pro { background: rgba(6, 182, 212, 0.2); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.4); }
     .tier-ultra { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5); }
 
+    /* ŠTÍTOK PRO */
+    .badge-pro {
+      display: inline-flex;
+      align-items: center;
+      background: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%);
+      color: white;
+      font-weight: 900;
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
     .app-mode-btn {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--card-border);
@@ -153,7 +169,7 @@
     .nav-tab svg { width: 16px; height: 16px; stroke: currentColor; }
     .nav-tab.active { color: white; background: rgba(255, 255, 255, 0.12); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
 
-    /* Rám a zámok pre neprihlásených */
+    /* Rám a zámok */
     .viewport-container {
       width: 100%; max-width: 1200px; transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
       display: flex; justify-content: center; position: relative;
@@ -164,7 +180,6 @@
       overflow-y: auto; overflow-x: hidden; padding: 16px 12px 30px 12px; background: #090c13;
     }
 
-    /* ZÁMOK CELÉHO SYSTÉMU PRE NEPRIHLÁSENÝCH */
     .auth-lock-overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(7, 9, 14, 0.82); backdrop-filter: blur(20px);
@@ -258,6 +273,7 @@
     .download-formats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     @media (max-width: 600px) { .download-formats-grid { grid-template-columns: 1fr 1fr; } }
     .btn-download-format { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); padding: 10px 8px; border-radius: 12px; color: var(--text-main); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.82rem; font-weight: 700; transition: all 0.2s; }
+    .btn-download-format:hover { background: rgba(255, 255, 255, 0.12); }
     .btn-download-format.locked { opacity: 0.45; }
     .btn-download-format.locked span.lock-label { font-size: 0.65rem; color: #f59e0b; }
     .limit-banner { display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px 18px; border-radius: var(--radius-md); color: #fca5a5; font-size: 0.88rem; align-items: center; justify-content: space-between; gap: 12px; }
@@ -269,24 +285,23 @@
     .modal-card { width: 100%; max-width: 580px; background: #0f131f; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 28px; padding: 28px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9); position: relative; max-height: 92vh; overflow-y: auto; }
     .pay-input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); color: white; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; outline: none; margin-bottom: 10px; }
 
-    /* Auth modal záložky */
+    /* Auth modal */
     .auth-tabs-row { display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 10px; }
     .auth-tab-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.95rem; font-weight: 700; cursor: pointer; padding: 6px 14px; border-radius: 16px; transition: all 0.2s; }
     .auth-tab-btn.active { color: white; background: rgba(255, 255, 255, 0.1); }
-
     .auth-pane { display: none; }
     .auth-pane.active { display: block; }
 
-    /* QR Code Display */
+    /* QR Code */
     .qr-container { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 20px; background: rgba(0, 0, 0, 0.35); border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.06); text-align: center; }
     .qr-image-frame { width: 200px; height: 200px; background: white; padding: 8px; border-radius: 14px; box-shadow: 0 0 25px rgba(99, 102, 241, 0.4); display: flex; align-items: center; justify-content: center; }
     .qr-image-frame img { width: 100%; height: 100%; display: block; }
     .qr-status-pill { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: rgba(6, 182, 212, 0.15); color: #38bdf8; font-weight: 600; }
 
-    /* Mobilná autorizačná obrazovka */
+    /* Mobilná autorizácia */
     .mobile-approval-screen { display: none; width: 100%; max-width: 480px; background: #0f131f; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 28px; padding: 32px; text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8); }
 
-    /* Email a štylizátor */
+    /* Email a sekcie */
     .email-gen-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: rgba(0, 0, 0, 0.22); padding: 16px; border-radius: var(--radius-md); border: 1px solid rgba(255, 255, 255, 0.05); }
     .email-provider-select { background: rgba(255, 255, 255, 0.07); border: 1px solid var(--card-border); color: white; padding: 10px 18px; border-radius: 30px; outline: none; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
     .email-table-wrap { max-height: 380px; overflow-y: auto; border-radius: var(--radius-md); border: 1px solid rgba(255, 255, 255, 0.06); background: rgba(0, 0, 0, 0.25); }
@@ -322,7 +337,7 @@
   <div class="blob blob-2"></div>
   <div class="blob blob-3"></div>
 
-  <!-- MOBILNÁ SCHVAĽOVACIA OBRAZOVKA (Zobrazí sa po naskenovaní QR na telefóne) -->
+  <!-- MOBILNÁ SCHVAĽOVACIA OBRAZOVKA (QR Kód) -->
   <div class="mobile-approval-screen" id="mobileApprovalScreen">
     <div style="width:60px; height:60px; border-radius:50%; background:rgba(99,102,241,0.2); margin:0 auto 16px auto; display:flex; align-items:center; justify-content:center;">
       <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"></rect><line x1="12" y1="18" x2="12" y2="18.01"></line></svg>
@@ -353,17 +368,15 @@
       </div>
 
       <div class="header-actions">
-        <!-- Stav prihlásenia a anonymné ID -->
         <div class="user-pill" id="userPill">
           <span>👤 <b id="userDisplayName">Hosť (Neprihlásený)</b></span>
           <span class="tier-badge tier-free" id="userTierBadge">LOCK</span>
         </div>
 
-        <!-- Tlačidlá Prihlásenia / Odhlásenia -->
         <button class="btn-auth-header" id="headerAuthBtn">Prihlásiť sa</button>
 
         <button class="btn-upgrade" id="openPaymentBtn">
-          <span>💎 Tarify & Brána</span>
+          <span>💎 Tarify & Brána <span class="badge-pro">PRO</span></span>
         </button>
 
         <button class="app-mode-btn" id="mobileToggle">
@@ -381,7 +394,7 @@
       </button>
       <button class="nav-tab" data-target="tts-gemini-view">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-        🔊 Gemini 3.8 Flash-Lite TTS
+        🔊 Gemini TTS Studio <span class="badge-pro">PRO</span>
       </button>
       <button class="nav-tab" data-target="email-gen-view">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
@@ -405,7 +418,7 @@
     <main class="viewport-container" id="mainContainer">
       <div class="notch"></div>
 
-      <!-- ZÁMOK SYSTÉMU (Zobrazí sa ak používateľ nie je prihlásený) -->
+      <!-- ZÁMOK SYSTÉMU (Zobrazí sa neprihláseným) -->
       <div class="auth-lock-overlay" id="authGateOverlay">
         <div class="lock-icon-box">
           <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
@@ -517,24 +530,31 @@
         </div>
       </section>
 
-      <!-- MODUL 2: GEMINI 3.8 FLASH-LITE TTS STUDIO -->
+      <!-- MODUL 2: GEMINI 3.8 FLASH-LITE & FLASH PRO TTS STUDIO -->
       <section class="card-workspace sub-section" id="tts-gemini-view">
         <div class="tts-header-info">
           <div>
-            <h3>Gemini 3.8 Flash-Lite Text-to-Speech</h3>
+            <h3>Gemini Text-to-Speech Studio</h3>
             <p style="color:var(--text-muted); font-size:0.86rem; margin-top:2px;">
-              Vysoko výkonný hlasový generátor s podporou vlastného kľúča a sťahovania formátov.
+              Vysoko výkonný hlasový generátor s modelmi Flash-Lite a Flash PRO.
             </p>
           </div>
           <div style="display:flex; gap:8px; align-items:center;">
-            <span class="model-badge">gemini-3.8-flash-lite-tts</span>
+            <span class="model-badge" id="activeModelBadge">gemini-3.8-flash-lite-tts</span>
             <span class="db-badge" id="freeLimitCounter">Limit: 3/3 zadarmo</span>
           </div>
         </div>
 
+        <!-- Banner: Odpočet 3-minútového testu pre gemini-3.8-flash-tts PRO -->
+        <div class="limit-banner" id="flashProTrialBanner" style="background:rgba(245,158,11,0.15); border-color:rgba(245,158,11,0.4); color:#fef3c7;">
+          <span>⏱️ Testujete <b>gemini-3.8-flash-tts <span class="badge-pro">PRO</span></b>. Skúšobná doba vyprší o: <b id="flashProTrialTimer" style="color:#f59e0b;">03:00</b></span>
+          <button class="btn-upgrade" onclick="openPaymentModal()" style="padding:4px 12px; font-size:0.75rem;">Aktivovať PRO <span class="badge-pro">PRO</span></button>
+        </div>
+
+        <!-- Banner: 2-hodinový limit pre Free Lite -->
         <div class="limit-banner" id="ttsLimitBanner">
           <span>⚠️ Bezplatný limit (3 generovania) vyčerpaný. Počkajte <b id="cooldownTimer">2h 00m</b> alebo aktivujte prémium.</span>
-          <button class="btn-upgrade" onclick="openPaymentModal()" style="padding:6px 14px; font-size:0.78rem;">Odomknúť limit</button>
+          <button class="btn-upgrade" onclick="openPaymentModal()" style="padding:6px 14px; font-size:0.78rem;">Odomknúť limit <span class="badge-pro">PRO</span></button>
         </div>
 
         <div class="api-key-box">
@@ -544,6 +564,15 @@
         </div>
 
         <div class="tts-controls-row">
+          <!-- VÝBER MODELU (Flash-Lite vs Flash PRO s 3-minútovým testom) -->
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Model TTS</label>
+            <select id="ttsModelSelect" class="pay-input" style="margin-top:6px;">
+              <option value="gemini-3.8-flash-lite-tts" selected>gemini-3.8-flash-lite-tts (Základný)</option>
+              <option value="gemini-3.8-flash-tts">gemini-3.8-flash-tts (⭐ PRO - Platený)</option>
+            </select>
+          </div>
+
           <div>
             <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Neurálny Hlas</label>
             <select id="ttsVoiceSelect" class="pay-input" style="margin-top:6px;">
@@ -554,15 +583,7 @@
               <option value="Aoede">Aoede (Jemný / Melodický)</option>
             </select>
           </div>
-          <div>
-            <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Jazyk výslovnosti</label>
-            <select id="ttsLangSelect" class="pay-input" style="margin-top:6px;">
-              <option value="sk-SK">Slovenčina (SK)</option>
-              <option value="cs-CZ">Čeština (CZ)</option>
-              <option value="en-US" selected>Angličtina (US)</option>
-              <option value="de-DE">Nemčina (DE)</option>
-            </select>
-          </div>
+
           <div style="display:flex; align-items:flex-end;">
             <button class="btn-submit" id="generateTtsBtn" style="width:100%; justify-content:center; padding:11px;">
               <span>Vygenerovať Hlas (Gemini)</span>
@@ -571,7 +592,7 @@
         </div>
 
         <div class="text-box" style="height:170px;">
-          <textarea id="ttsTextInput" placeholder="Sem zadajte text, ktorý má model gemini-3.8-flash-lite-tts previesť na realistickú reč..."></textarea>
+          <textarea id="ttsTextInput" placeholder="Sem zadajte text, ktorý má model Gemini previesť na realistickú reč..."></textarea>
         </div>
 
         <div class="tts-player-card">
@@ -584,24 +605,24 @@
 
           <div>
             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-              <span style="font-size:0.8rem; font-weight:700; color:#e2e8f0;">Sťahovanie súboru (Platené formáty)</span>
+              <span style="font-size:0.8rem; font-weight:700; color:#e2e8f0;">Sťahovanie súboru (Platené formáty <span class="badge-pro">PRO</span>)</span>
               <span style="font-size:0.74rem; color:#f59e0b;">Vyžaduje tarifný balíček</span>
             </div>
             <div class="download-formats-grid">
               <button class="btn-download-format locked" id="dlWavBtn">
-                <span>🎵 WAV Audio</span>
+                <span>🎵 WAV Audio <span class="badge-pro">PRO</span></span>
                 <span class="lock-label">Pro / Ultra</span>
               </button>
               <button class="btn-download-format locked" id="dlMp3Btn">
-                <span>🎧 MP3 Audio</span>
+                <span>🎧 MP3 Audio <span class="badge-pro">PRO</span></span>
                 <span class="lock-label">Pro / Ultra</span>
               </button>
               <button class="btn-download-format locked" id="dlMp4Btn">
-                <span>🎬 MP4 Video</span>
+                <span>🎬 MP4 Video <span class="badge-pro">PRO</span></span>
                 <span class="lock-label">Iba Ultra</span>
               </button>
               <button class="btn-download-format locked" id="dlMkvBtn">
-                <span>🎞️ MKV Media</span>
+                <span>🎞️ MKV Media <span class="badge-pro">PRO</span></span>
                 <span class="lock-label">Iba Ultra</span>
               </button>
             </div>
@@ -753,14 +774,12 @@
         <button class="icon-btn" onclick="closeAuthModal()">✕</button>
       </div>
 
-      <!-- Prepínače kariet -->
       <div class="auth-tabs-row">
         <button class="auth-tab-btn active" id="tabBtnLogin" onclick="switchAuthTab('login')">Prihlásenie</button>
         <button class="auth-tab-btn" id="tabBtnRegister" onclick="switchAuthTab('register')">Registrácia</button>
         <button class="auth-tab-btn" id="tabBtnQr" onclick="switchAuthTab('qr')">📲 QR Kód (Live)</button>
       </div>
 
-      <!-- 1. PRIHLÁSENIE HESLOM -->
       <div class="auth-pane active" id="paneLogin">
         <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Prihlasovací Email</label>
         <input type="email" class="pay-input" id="loginEmail" placeholder="vas@email.com">
@@ -773,7 +792,6 @@
         </button>
       </div>
 
-      <!-- 2. REGISTRÁCIA NOVÉHO ÚČTU -->
       <div class="auth-pane" id="paneRegister">
         <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Vaše Meno alebo Prezývka</label>
         <input type="text" class="pay-input" id="regName" placeholder="Meno Priezvisko">
@@ -789,7 +807,6 @@
         </button>
       </div>
 
-      <!-- 3. REAL-TIME QR KÓD PRIHLÁSENIE BEŽIACE NA ZADARMO CLOUDE (PeerJS) -->
       <div class="auth-pane" id="paneQr">
         <div class="qr-container">
           <div class="qr-status-pill" id="qrServerStatus">Pripájam k bezplatnému PeerJS serveru...</div>
@@ -814,7 +831,7 @@
   <div class="modal-backdrop" id="paymentModal">
     <div class="modal-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3>💎 Predplatné a Tarify (Platobná Brána)</h3>
+        <h3>💎 Predplatné a Tarify (Platobná Brána) <span class="badge-pro">PRO</span></h3>
         <button class="icon-btn" onclick="closePaymentModal()">✕</button>
       </div>
       <p style="color:var(--text-muted); font-size:0.85rem;">
@@ -823,15 +840,15 @@
 
       <div class="pricing-cards-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:18px 0;">
         <div class="tone-chip" id="planCardPro" onclick="selectPlan('pro')" style="padding:16px;">
-          <h4>Audio Pro</h4>
+          <h4>Audio Pro <span class="badge-pro">PRO</span></h4>
           <div style="font-size:1.3rem; font-weight:800; color:#38bdf8; margin:6px 0;">9.99 € <span style="font-size:0.75rem; color:var(--text-muted);">/ mes.</span></div>
-          <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.5;">200 TTS generovaní, sťahovanie WAV & MP3.</p>
+          <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.5;">Odomknutý model gemini-3.8-flash-tts PRO, 200 TTS generovaní, sťahovanie WAV & MP3.</p>
         </div>
 
         <div class="tone-chip selected" id="planCardUltra" onclick="selectPlan('ultra')" style="padding:16px;">
-          <h4>Studio Master</h4>
+          <h4>Studio Master <span class="badge-pro">PRO</span></h4>
           <div style="font-size:1.3rem; font-weight:800; color:#38bdf8; margin:6px 0;">19.99 € <span style="font-size:0.75rem; color:var(--text-muted);">/ mes.</span></div>
-          <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.5;">Neobmedzené TTS, sťahovanie WAV, MP3, MP4 & MKV.</p>
+          <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.5;">Neobmedzené gemini-3.8-flash-tts PRO, sťahovanie WAV, MP3, MP4 & MKV.</p>
         </div>
       </div>
 
@@ -857,7 +874,7 @@
       <div style="margin-top:18px; display:flex; justify-content:space-between; align-items:center;">
         <span style="font-size:0.84rem; color:var(--text-muted);" id="modalPlanSummary">Vybrané: Studio Master (19.99 €)</span>
         <button class="btn-submit" id="processPaymentBtn">
-          <span>Zaplatiť a Aktivovať na 30 dní</span>
+          <span>Zaplatiť a Aktivovať na 30 dní <span class="badge-pro">PRO</span></span>
         </button>
       </div>
     </div>
@@ -867,7 +884,7 @@
 
   <script>
     /* ========================================================
-       1. ZÁKLADNÉ DOM ELEMENTY A NOTIFIKÁCIE
+       1. ZÁKLADNÉ DOM A NOTIFIKÁCIE
     ======================================================== */
     const toast = document.getElementById('toast');
     function showToast(msg) {
@@ -880,9 +897,9 @@
        2. INDEXED DB (TABUĽKY: EMAILS + ACCOUNT + REGISTERED USERS)
     ======================================================== */
     const DB_NAME = 'AetherNeuralDB';
-    const DB_VERSION = 3; // Verzia 3 s tabuľkou registrovaných používateľov
+    const DB_VERSION = 3;
     let dbInstance = null;
-    let currentUser = null; // Aktuálne prihlásený používateľ
+    let currentUser = null;
 
     function initIndexedDB() {
       return new Promise((resolve, reject) => {
@@ -897,7 +914,6 @@
           if (!db.objectStoreNames.contains('account_store')) {
             db.createObjectStore('account_store', { keyPath: 'id' });
           }
-          // Nová tabuľka registrovaných účtov
           if (!db.objectStoreNames.contains('registered_users')) {
             db.createObjectStore('registered_users', { keyPath: 'email' });
           }
@@ -946,11 +962,10 @@
       } else if (tab === 'qr') {
         document.getElementById('tabBtnQr').classList.add('active');
         document.getElementById('paneQr').classList.add('active');
-        initPeerQrSession(); // Spustí QR kód
+        initPeerQrSession();
       }
     };
 
-    // Uloženie prihlásenej relácie
     function setCurrentSession(user) {
       currentUser = user;
       localStorage.setItem('aether_active_session', JSON.stringify(user));
@@ -975,22 +990,16 @@
     }
 
     headerAuthBtn.addEventListener('click', () => {
-      if (currentUser) {
-        logoutUser();
-      } else {
-        openAuthModal('login');
-      }
+      if (currentUser) logoutUser();
+      else openAuthModal('login');
     });
 
-    // Aktualizácia stavu zámku a záhlavia
     function applyAuthToUI() {
       if (currentUser) {
-        // Používateľ je prihlásený -> ODOMKNÚŤ SLUŽBY
         authGateOverlay.classList.add('hidden');
         userDisplayName.textContent = currentUser.name || currentUser.email;
         headerAuthBtn.textContent = "Odhlásiť sa";
 
-        // Kontrola prémiového stavu a expirácie
         if (currentUser.premiumUntil && Date.now() > currentUser.premiumUntil) {
           currentUser.tier = 'free';
           currentUser.premiumUntil = null;
@@ -1010,7 +1019,6 @@
           userTierBadge.classList.add('tier-free');
         }
       } else {
-        // Používateľ je neprihlásený -> ZAMKNÚŤ SLUŽBY
         authGateOverlay.classList.remove('hidden');
         userDisplayName.textContent = "Hosť (Neprihlásený)";
         headerAuthBtn.textContent = "Prihlásiť sa";
@@ -1019,9 +1027,10 @@
       }
       updateDownloadButtonsAccess();
       updateTtsCounterUI();
+      checkFlashProTrialStatus();
     }
 
-    // Registrácia do IndexedDB
+    // Registrácia
     document.getElementById('submitRegisterBtn').addEventListener('click', async () => {
       const name = document.getElementById('regName').value.trim();
       const email = document.getElementById('regEmail').value.trim().toLowerCase();
@@ -1060,7 +1069,7 @@
       };
     });
 
-    // Prihlásenie heslom z IndexedDB
+    // Prihlásenie heslom
     document.getElementById('submitLoginBtn').addEventListener('click', () => {
       const email = document.getElementById('loginEmail').value.trim().toLowerCase();
       const pass = document.getElementById('loginPassword').value;
@@ -1097,25 +1106,16 @@
       const statusPill = document.getElementById('qrServerStatus');
       const qrImg = document.getElementById('qrCodeImg');
 
-      // Vytvorenie unikátneho session ID pre PC reláciu
       qrAuthSessionId = 'aether-auth-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);
-
       statusPill.textContent = "Spájam s cloud serverom...";
 
       if (peerInstance) peerInstance.destroy();
 
-      // Pripojenie na verejný, bezplatný PeerJS server
-      peerInstance = new Peer(qrAuthSessionId, {
-        debug: 1
-      });
+      peerInstance = new Peer(qrAuthSessionId, { debug: 1 });
 
       peerInstance.on('open', (id) => {
         statusPill.textContent = "🟢 QR Kód pripravený. Naskenujte mobilom.";
-        
-        // URL odkaz, ktorý otvorí mobil po naskenovaní
         const targetUrl = `${window.location.origin}${window.location.pathname}?qr_auth=${id}`;
-        
-        // Vygenerovanie reálneho QR kódu cez bezplatnú QR službu
         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}`;
 
         document.getElementById('copyQrLinkBtn').onclick = () => {
@@ -1124,21 +1124,17 @@
         };
       });
 
-      // Počúvanie na prichádzajúce potvrdenie z mobilu
       peerInstance.on('connection', (conn) => {
         statusPill.textContent = "📱 Mobil pripojený! Čakám na potvrdenie...";
         conn.on('data', (data) => {
           if (data && data.action === 'approve_login') {
             statusPill.textContent = "✅ Schválené! Prihlasujem PC...";
-
-            // Prihlásenie PC na základe mobilného potvrdenia
             const mobileUser = {
               email: data.email || 'mobilny.pouzivatel@aether.ai',
               name: data.name || 'Overený Používateľ (QR)',
               tier: 'free',
               premiumUntil: null
             };
-
             setCurrentSession(mobileUser);
             closeAuthModal();
             showToast(`Prihlásenie z mobilu bolo úspešné! Všetko je odomknuté 🎉`);
@@ -1147,19 +1143,16 @@
         });
       });
 
-      peerInstance.on('error', (err) => {
-        console.warn("PeerJS connection note:", err);
+      peerInstance.on('error', () => {
         statusPill.textContent = "Relácia aktívna cez cloud router.";
       });
     }
 
-    // KONTROLA: Či je táto stránka otvorená z QR kódu na mobile
     function checkMobileQrApprovalMode() {
       const urlParams = new URLSearchParams(window.location.search);
       const targetPeerId = urlParams.get('qr_auth');
 
       if (targetPeerId) {
-        // Skryje hlavnú aplikáciu a zobrazí iba mobilnú schvaľovaciu kartu
         document.getElementById('mainAppWrapper').style.display = 'none';
         const mobileScreen = document.getElementById('mobileApprovalScreen');
         mobileScreen.style.display = 'block';
@@ -1181,7 +1174,6 @@
                 name: name,
                 email: `${name.toLowerCase().replace(/\s+/g, '.')}@mobil.qr`
               });
-
               statusEl.innerHTML = "<b style='color:#10b981;'>Hotovo! Váš počítač bol práve prihlásený. Túto stránku môžete zatvoriť.</b>";
               showToast("Počítač bol úspešne prihlásený!");
             });
@@ -1193,10 +1185,70 @@
     }
 
     /* ========================================================
-       5. GEMINI 3.8 FLASH-LITE TTS STUDIO & PLATOBNÁ BRÁNA
+       5. GEMINI TTS STUDIO: FLASH-LITE & FLASH PRO (3-MINÚTOVÝ TEST)
     ======================================================== */
     let generatedAudioBlob = null;
     let generatedAudioUrl = null;
+    const ttsModelSelect = document.getElementById('ttsModelSelect');
+    const flashProTrialBanner = document.getElementById('flashProTrialBanner');
+    const flashProTrialTimer = document.getElementById('flashProTrialTimer');
+
+    // Aktualizácia modelu v odznaku
+    ttsModelSelect.addEventListener('change', () => {
+      const selected = ttsModelSelect.value;
+      document.getElementById('activeModelBadge').textContent = selected;
+      checkFlashProTrialStatus();
+    });
+
+    // Kontrola 3-minútového testu pre nový model gemini-3.8-flash-tts
+    function checkFlashProTrialStatus() {
+      const selectedModel = ttsModelSelect.value;
+      const isProModel = selectedModel === 'gemini-3.8-flash-tts';
+      const isPaidUser = currentUser && (currentUser.tier === 'pro' || currentUser.tier === 'ultra');
+
+      if (isPaidUser) {
+        flashProTrialBanner.classList.remove('show');
+        return { allowed: true, isPaid: true };
+      }
+
+      if (!isProModel) {
+        flashProTrialBanner.classList.remove('show');
+        return { allowed: true, isPaid: false };
+      }
+
+      // Pre neprihlásených alebo Free používateľov pri gemini-3.8-flash-tts:
+      let trialStart = localStorage.getItem('gemini_flash_tts_trial_start');
+      if (!trialStart) {
+        // Nový používateľ začína testovať
+        trialStart = Date.now().toString();
+        localStorage.setItem('gemini_flash_tts_trial_start', trialStart);
+      }
+
+      const elapsedMs = Date.now() - parseInt(trialStart, 10);
+      const remainingMs = (3 * 60 * 1000) - elapsedMs;
+
+      if (remainingMs > 0) {
+        flashProTrialBanner.classList.add('show');
+        const mins = Math.floor(remainingMs / 60000);
+        const secs = Math.floor((remainingMs % 60000) / 1000);
+        flashProTrialTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        return { allowed: true, isPaid: false };
+      } else {
+        // Po 3 minútach sa model uzamkne
+        flashProTrialBanner.classList.remove('show');
+        return { allowed: false, isPaid: false };
+      }
+    }
+
+    // Interval pre live odpočítavanie 3 minút
+    setInterval(() => {
+      if (ttsModelSelect.value === 'gemini-3.8-flash-tts') {
+        const status = checkFlashProTrialStatus();
+        if (!status.allowed && !status.isPaid) {
+          document.getElementById('ttsAudioStatus').textContent = "Model gemini-3.8-flash-tts (PRO) je uzamknutý.";
+        }
+      }
+    }, 1000);
 
     document.getElementById('saveApiKeyBtn').addEventListener('click', async () => {
       const key = document.getElementById('googleApiKeyInput').value.trim();
@@ -1211,7 +1263,19 @@
       const text = document.getElementById('ttsTextInput').value.trim();
       if (!text) return showToast("Zadajte text na čítanie.");
 
-      // Limit pre FREE
+      const selectedModel = ttsModelSelect.value;
+
+      // 1. KONTROLA PRE PLATENÝ MODEL GEMINI-3.8-FLASH-TTS (3 MINÚTY TESTOVANIE)
+      if (selectedModel === 'gemini-3.8-flash-tts') {
+        const trialStatus = checkFlashProTrialStatus();
+        if (!trialStatus.allowed) {
+          showToast("Model gemini-3.8-flash-tts (PRO) je platený! Vaša 3-minútová skúšobná verzia vypršala.");
+          openPaymentModal();
+          return;
+        }
+      }
+
+      // 2. KONTROLA PRE STANDARD MODEL (3 generovania a 2h cooldown pre Free tier)
       if (currentUser.tier === 'free') {
         const usage = parseInt(localStorage.getItem('tts_free_usage') || '0', 10);
         const cooldown = parseInt(localStorage.getItem('tts_cooldown') || '0', 10);
@@ -1230,14 +1294,13 @@
       }
 
       const statusEl = document.getElementById('ttsAudioStatus');
-      statusEl.textContent = "Spracovávam cez gemini-3.8-flash-lite-tts...";
+      statusEl.textContent = `Spracovávam cez model ${selectedModel}...`;
       const voice = document.getElementById('ttsVoiceSelect').value;
-      const lang = document.getElementById('ttsLangSelect').value;
       const apiKey = localStorage.getItem('aether_google_api_key') || document.getElementById('googleApiKeyInput').value.trim();
 
       try {
         if (apiKey) {
-          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-lite-tts:generateContent?key=${apiKey}`;
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
           const res = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1260,11 +1323,11 @@
             for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
             generatedAudioBlob = new Blob([new Uint8Array(byteNumbers)], { type: 'audio/wav' });
           } else {
-            generatedAudioBlob = await createFallbackAudioBlob(text, lang);
+            generatedAudioBlob = await createFallbackAudioBlob(text, 'sk-SK');
           }
         } else {
-          generatedAudioBlob = await createFallbackAudioBlob(text, lang);
-          showToast("Pre plný výkon gemini-3.8-flash-lite-tts vložte Google API kľúč.");
+          generatedAudioBlob = await createFallbackAudioBlob(text, 'sk-SK');
+          showToast(`Pre plný výkon modelu ${selectedModel} vložte Google API kľúč.`);
         }
 
         if (generatedAudioUrl) URL.revokeObjectURL(generatedAudioUrl);
@@ -1272,7 +1335,7 @@
         const player = document.getElementById('audioPlayer');
         player.src = generatedAudioUrl;
         player.play();
-        statusEl.textContent = "Prehrávam zvukový výstup";
+        statusEl.textContent = `Prehrávam zvuk (${selectedModel})`;
 
         if (currentUser.tier === 'free') {
           let usage = parseInt(localStorage.getItem('tts_free_usage') || '0', 10) + 1;
@@ -1280,9 +1343,9 @@
           if (usage >= 3) localStorage.setItem('tts_cooldown', (Date.now() + 2 * 60 * 60 * 1000).toString());
           updateTtsCounterUI();
         }
-        showToast("Hlas úspešne vygenerovaný! 🎙️");
+        showToast(`Hlas úspešne vygenerovaný cez ${selectedModel}! 🎙️`);
       } catch (e) {
-        generatedAudioBlob = await createFallbackAudioBlob(text, lang);
+        generatedAudioBlob = await createFallbackAudioBlob(text, 'sk-SK');
         if (generatedAudioUrl) URL.revokeObjectURL(generatedAudioUrl);
         generatedAudioUrl = URL.createObjectURL(generatedAudioBlob);
         document.getElementById('audioPlayer').src = generatedAudioUrl;
@@ -1332,7 +1395,7 @@
       const tier = currentUser ? currentUser.tier : 'free';
 
       if (tier === 'free') {
-        showToast(`Sťahovanie formátu .${format.toUpperCase()} vyžaduje predplatné.`);
+        showToast(`Sťahovanie formátu .${format.toUpperCase()} vyžaduje predplatné PRO.`);
         openPaymentModal();
         return;
       }
@@ -1437,7 +1500,7 @@
       currentUser.premiumUntil = Date.now() + (30 * 24 * 60 * 60 * 1000);
       setCurrentSession(currentUser);
       closePaymentModal();
-      showToast("Predplatné na 30 dní aktivované! 💎");
+      showToast("Predplatné PRO na 30 dní aktivované! Model gemini-3.8-flash-tts odomknutý. 💎");
     });
 
     /* ========================================================
@@ -1721,7 +1784,7 @@
         "Zadajte text do prekladača pre zobrazenie metriky.";
     }
 
-    // Navigácia a prepínače
+    // Mobilný rám a tab navigácia
     const mobileToggle = document.getElementById('mobileToggle');
     const mainContainer = document.getElementById('mainContainer');
     mobileToggle.addEventListener('click', () => {
@@ -1740,7 +1803,7 @@
       });
     });
 
-    // ŠTART APLIKÁCIE
+    // Štart aplikácie
     window.addEventListener('DOMContentLoaded', () => {
       if (!checkMobileQrApprovalMode()) {
         initIndexedDB();
